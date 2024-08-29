@@ -1,0 +1,73 @@
+---
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: postgres-config
+apiVersion: v1
+data:
+  POSTGRES_HOSTNAME: 10.21.2.33
+  POSTGRES_INNER_PORT: "5432"
+  POSTGRES_OUTER_PORT: "5432"
+  POSTGRES_PASSWORD: notpostgres
+  POSTGRES_USER: postgres
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: create-database-config
+data:
+  create-db.sh: |-
+    #! /bin/bash
+
+    export PGPASSWORD=${POSTGRES_PASSWORD}
+    # env
+    echo "var 1-$POSTGRES_USER 2-${POSTGRES_HOSTNAME}"
+    psql -U "$POSTGRES_USER" -h ${POSTGRES_HOSTNAME} -a -f /opt/scripts/docker_postgres_init.sql
+  docker_postgres_init.sql: |
+    -- keycloak db
+    CREATE USER keycloak WITH PASSWORD 'keycloak' CREATEDB;
+    CREATE DATABASE keycloak
+        WITH
+        OWNER = keycloak
+        ENCODING = 'UTF8'
+        LC_COLLATE = 'en_US.UTF8'
+        LC_CTYPE = 'en_US.UTF8'
+        TABLESPACE = pg_default
+        CONNECTION LIMIT = -1
+        TEMPLATE template0;
+
+    -- nifireg
+    CREATE USER nifireg WITH PASSWORD 'nifireg' CREATEDB;
+    CREATE DATABASE nifireg
+        WITH
+        OWNER = nifireg
+        ENCODING = 'UTF8'
+        LC_COLLATE = 'en_US.UTF8'
+        LC_CTYPE = 'en_US.UTF8'
+        TABLESPACE = pg_default
+        CONNECTION LIMIT = -1
+        TEMPLATE template0;
+    -- datamanager
+    CREATE USER datamanager WITH PASSWORD 'datamanager' CREATEDB;
+    CREATE DATABASE datamanager
+        WITH
+        OWNER = datamanager
+        ENCODING = 'UTF8'
+        LC_COLLATE = 'en_US.UTF8'
+        LC_CTYPE = 'en_US.UTF8'
+        TABLESPACE = pg_default
+        CONNECTION LIMIT = -1
+        TEMPLATE template0;
+
+    -- modelregistry
+    CREATE USER model_registry WITH PASSWORD 'model_registry' CREATEDB;
+    CREATE DATABASE model_registry
+        WITH
+        OWNER = model_registry
+        ENCODING = 'UTF8'
+        LC_COLLATE = 'en_US.UTF8'
+        LC_CTYPE = 'en_US.UTF8'
+        TABLESPACE = pg_default
+        CONNECTION LIMIT = -1
+        TEMPLATE template0;

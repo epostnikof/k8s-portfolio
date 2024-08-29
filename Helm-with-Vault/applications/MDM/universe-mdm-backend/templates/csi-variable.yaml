@@ -1,0 +1,45 @@
+## VAULT
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-database
+spec:
+  provider: vault
+  secretObjects:
+  - data:
+    - key: postgres-password
+      objectName: postgres-password
+    secretName: postgres-password
+    type: Opaque
+  - data:
+    - key: postgres-address
+      objectName: postgres-address
+    secretName: postgres-address
+    type: Opaque
+  - data:
+    - key: postgres-username
+      objectName: postgres-username
+    secretName: postgres-username
+    type: Opaque
+  - data:
+    - key: opensearch-address
+      objectName: opensearch-address
+    secretName: opensearch-address
+    type: Opaque
+  parameters:
+    vaultAddress: "{{ .Values.vault.address }}"
+    roleName: "{{ .Values.vault.rolename }}"
+    objects: |
+      - objectName: "postgres-password"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "postgres-password"
+      - objectName: "postgres-address"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "postgres-address"
+      - objectName: "postgres-username"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "postgres-username"
+      - objectName: "opensearch-address"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "opensearch-address"

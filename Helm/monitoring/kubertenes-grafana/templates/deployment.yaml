@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: monitoring
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      name: {{ .Chart.Name }}
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Chart.Name }}
+              containerPort: 3000
+          resources:
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+          volumeMounts:
+            - mountPath: /var/lib/grafana
+              name: nfs-pv-{{ .Chart.Name }}-data
+            - mountPath: /etc/grafana/provisioning/datasources
+              name: grafana-datasources
+              readOnly: false
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+      volumes:
+        - name: nfs-pv-{{ .Chart.Name }}-data
+          persistentVolumeClaim:
+            claimName: nfs-pvc-{{ .Chart.Name }}-data
+        - name: grafana-datasources
+          configMap:
+            defaultMode: 420
+            name: grafana-datasources
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"

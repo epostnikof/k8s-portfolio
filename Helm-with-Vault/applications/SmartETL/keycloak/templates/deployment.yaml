@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: smartetl
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      serviceAccountName: "{{ .Values.vault.service_account }}" # Vault
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          args: ["start", "--cache-stack=kubernetes"]
+          imagePullPolicy: {{ .Values.podManagementPolicy }}
+          envFrom:
+            - configMapRef:
+                name: "{{ .Chart.Name }}-cm"
+                optional: false
+          env:
+            # << Vault >>>
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: kc-admin-user
+                  key: kc-admin-user
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kc-admin-password
+                  key: kc-admin-password
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: kc-db-username
+                  key: kc-db-username
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: 
+                  name: kc-postgresql-pass
+                  key: kc-postgresql-pass
+            # <<- / Vault -->>
+            # << Vault >>>
+          volumeMounts:
+          - name: secrets-store-inline
+            mountPath: "/mnt/secrets-store"
+            readOnly: true
+            # <<- / Vault -->>
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetport }}
+            - name: jgroups
+              containerPort: 7600
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /auth/health/ready
+              port: {{ .Values.service.targetport }}
+            initialDelaySeconds: 60
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+            # << Vault >>>
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "vault-database-keycloak"
+            # <<- / Vault -->>
+

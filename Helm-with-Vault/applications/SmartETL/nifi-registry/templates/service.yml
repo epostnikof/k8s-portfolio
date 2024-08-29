@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+  annotations:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 600
+  selector:
+    app: {{ .Chart.Name }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.http_port }}
+      targetPort: {{ .Values.service.http_port }}
+      name: http
+    - protocol: TCP
+      port: {{ .Values.service.https_port }}
+      targetPort: {{ .Values.service.https_port }}
+      name: https

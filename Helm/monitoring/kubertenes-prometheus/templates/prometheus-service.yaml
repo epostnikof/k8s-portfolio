@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: {{ .Values.Namespace }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+  type: LoadBalancer
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.containerPort }}

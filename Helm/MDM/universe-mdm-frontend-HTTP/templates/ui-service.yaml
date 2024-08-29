@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Chart.Name }}-service"
+spec:
+  type: NodePort
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 600
+  ports:
+    - port: {{ .Values.frontend.forward_port }}
+      targetPort: {{ .Values.frontend.container_port }}
+      nodePort: {{ .Values.frontend.node_port }}
+  selector:
+    app: {{ .Chart.Name }}

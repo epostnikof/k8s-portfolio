@@ -1,0 +1,16 @@
+## Файл напрямую связан с PV
+# PV - это своего рода сырой Volume.
+# Здесь своего рода описаны запросы на эти Volume
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc-nifireg-data
+spec:
+  storageClassName: nfs
+  accessModes:
+    - ReadWriteMany
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 3Gi

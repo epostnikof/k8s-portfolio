@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mdm-service-{{ .Values.backend.color }}
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+    color: {{ .Values.backend.color }}
+  ports:
+    - protocol: TCP
+      port: 5701

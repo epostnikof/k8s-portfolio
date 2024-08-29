@@ -1,0 +1,54 @@
+---
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: "{{ .Chart.Name }}-config"
+apiVersion: v1
+data:
+  POSTGRES_HOSTNAME: "{{ .Values.external_postgres.postgres_hostname }}"
+  POSTGRES_INNER_PORT: "{{ .Values.external_postgres.postgres_inner_port }}"
+  POSTGRES_PASSWORD: "{{ .Values.external_postgres.postgres_password }}"
+  POSTGRES_USER: "{{ .Values.external_postgres.postgres_user }}"
+  KEYCLOAK_PASSWORD: "{{ .Values.external_postgres.keycloak_user_password }}"
+  NIFIREG_PASSWORD: "{{ .Values.external_postgres.nifireg_user_password }}"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: create-database-config
+data:
+  create-db.sh: |-
+    #! /bin/bash
+
+    export PGPASSWORD=${POSTGRES_PASSWORD}
+    export KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD}
+    export NIFIREG_PASSWORD=${NIFIREG_PASSWORD}
+    # env
+    echo "var 1-$POSTGRES_USER 2-${POSTGRES_HOSTNAME}"
+    psql -v KEYCLOAK_PASSWORD="$KEYCLOAK_PASSWORD" -v NIFIREG_PASSWORD="$NIFIREG_PASSWORD"  -U "$POSTGRES_USER" -h ${POSTGRES_HOSTNAME} -p ${POSTGRES_INNER_PORT} -a -f /opt/scripts/docker_postgres_init.sql
+  docker_postgres_init.sql: |
+    -- keycloak db
+    CREATE USER keycloak WITH PASSWORD :'KEYCLOAK_PASSWORD' CREATEDB;
+    CREATE DATABASE keycloak
+        WITH
+        OWNER = keycloak
+        ENCODING = 'UTF8'
+        LC_COLLATE = 'en_US.UTF8'
+        LC_CTYPE = 'en_US.UTF8'
+        TABLESPACE = pg_default
+        CONNECTION LIMIT = -1
+        TEMPLATE template0;
+
+    -- nifireg
+    CREATE USER nifireg WITH PASSWORD :'NIFIREG_PASSWORD' CREATEDB;
+    CREATE DATABASE nifireg
+        WITH
+        OWNER = nifireg
+        ENCODING = 'UTF8'
+        LC_COLLATE = 'en_US.UTF8'
+        LC_CTYPE = 'en_US.UTF8'
+        TABLESPACE = pg_default
+        CONNECTION LIMIT = -1
+        TEMPLATE template0;

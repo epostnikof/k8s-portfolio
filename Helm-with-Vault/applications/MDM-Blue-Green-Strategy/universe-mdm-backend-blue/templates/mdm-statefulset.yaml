@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}  
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  podManagementPolicy: {{ .Values.podManagementPolicy }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      color: {{ .Values.backend.color }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        color: {{ .Values.backend.color }}
+    spec:
+      serviceAccountName: "{{ .Values.vault.service_account }}" # Vault
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.container_port }}
+          envFrom:
+            - configMapRef:
+                name: config-{{ .Chart.Name }}
+          env:
+            # << Vault >>>
+            - name: POSTGRES_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-address
+                  key: postgres-address
+            - name: POSTGRES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-username
+                  key: postgres-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: postgres-password
+            - name: SEARCH_CLUSTER_ADDRESS
+              valueFrom:
+                secretKeyRef: 
+                  name: opensearch-address
+                  key: opensearch-address
+            # <<- / Vault -->>
+            - name: SYSTEM_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            # << Vault >>>
+          volumeMounts:
+          - name: secrets-store-inline
+            mountPath: "/mnt/secrets-store"
+            readOnly: true
+            # <<- / Vault -->>
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+              ephemeral-storage: {{ .Values.resources.requests.ephemeral_storage }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+              ephemeral-storage: {{ .Values.resources.limits.ephemeral_storage }}
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - java
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              port: {{ .Values.backend.container_port }}
+              path: /universe-backend/api
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+
+            # << Vault >>>
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "vault-database-{{ .Values.backend.color }}"
+            # <<- / Vault -->>
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-pull-secret"

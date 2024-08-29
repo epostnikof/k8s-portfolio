@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Chart.Name }}-cm"
+data:
+  KEYCLOAK_ADMIN: "{{ .Values.app.admin_user }}"
+  KEYCLOAK_ADMIN_PASSWORD: "{{ .Values.app.admin_password }}"
+  KC_PROXY: "{{ .Values.app.kc_proxy }}"
+  jgroups.dns.query: "{{ .Chart.Name }}"
+  PROXY_ADDRESS_FORWARDING: "{{ .Values.app.proxy_address_forwarding }}"
+  KC_HEALTH_ENABLED: "{{ .Values.app.kc_health_enabled }}"
+  KC_METRICS_ENABLED: "{{ .Values.app.kc_metrics_enabled }}"
+  KC_HTTP_ENABLED: "{{ .Values.app.kc_http_enabled }}"
+  KC_HTTP_RELATIVE_PATH: "{{ .Values.app.kc_http_relative_path }}"
+  KC_HOSTNAME_URL: "https://{{ .Values.ingress.domain }}{{ .Values.app.kc_hostname_url_path }}"
+  KC_HOSTNAME_ADMIN_URL: "https://{{ .Values.ingress.domain }}{{ .Values.app.kc_hostname_admin_url_path }}"
+  KC_DB: "postgres"
+  KC_DB_URL: "jdbc:postgresql://{{ .Values.app.kc_db_url_host }}:{{ .Values.app.kc_db_url_port }}/{{ .Values.app.kc_db_url_database }}"
+  KC_DB_URL_HOST: "{{ .Values.app.kc_db_url_host }}"
+  KC_DB_URL_PORT: "{{ .Values.app.kc_db_url_port }}"
+  KC_DB_URL_DATABASE: "{{ .Values.app.kc_db_url_database }}"
+  KC_DB_USERNAME: "{{ .Values.app.kc_db_username }}"
+  KC_DB_PASSWORD: "{{ .Values.app.kc_db_password }}"
+  CACHE_OWNERS_COUNT: "{{ .Values.replicaCount }}"
+  CACHE_OWNERS_AUTH_SESSIONS_COUNT: "{{ .Values.replicaCount }}"
+  # KC_HTTPS_CERTIFICATE_FILE: "/etc/certs/tls.crt"
+  # KC_HTTPS_CERTIFICATE_KEY_FILE: "/etc/certs/tls.key"

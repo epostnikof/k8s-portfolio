@@ -1,0 +1,24 @@
+# Default values for kubertenes-prometheus.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+Namespace: monitoring
+
+image:
+  repository: docker.universe-data.ru/smart-etl/monitoring/prom/node-exporter
+  tag: "latest"
+
+secret:
+  dockerconfigjson: []
+
+service:
+  port: 9100
+  containerPort: 9100
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 180Mi
+  requests:
+    cpu: 102m
+    memory: 180Mi

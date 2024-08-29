@@ -1,0 +1,71 @@
+# Default values for universe-mdm-backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+vault:
+  address: http://vault.vault.svc:8200
+  rolename: mdm
+  service_account: mdm-sa
+  policy_name: universe-mdm-app
+  secret_path: secret/data/universe_mdm
+# Важно: нужно разворачивать podы в том namespace, который вы уже указали в Vault!
+
+replicaCount: 2
+podManagementPolicy: OrderedReady
+image:
+  repository: docker.universe-data.ru/unidata-ee/backend
+  tag: "release-6-11-f8cef2ba"
+  pullPolicy: IfNotPresent
+
+backend:
+  container_port: 8080
+  forward_port: 9081
+
+secret:
+  dockerconfigjson: []
+
+resources:
+  requests:
+    cpu: 2000m
+    memory: 4Gi
+    ephemeral_storage: "2Gi"
+  limits:
+    cpu: 2000m
+    memory: 8Gi
+    ephemeral_storage: "3Gi"
+
+## Здесь требуется заполнить конфигурацию самого приложения
+config:
+  guest_mode: "false"
+  # Postgresql
+  database_name: "universe"
+  # Конфигурация подлючения к серверу Opensearch (Обязательно)
+  search_cluster_name: "docker-cluster"
+  ###
+  # Конфигурация прилоежения Universe MDM (Опционально)
+  email_enabled: "false"
+  email_server_host: "localhost"
+  email_server_port: "5025"
+  email_username: "universe@example.com"
+  email_password: "password"
+  email_frontend_url: "''"
+  email_ssl_enable: "true"
+  email_starttls_enable: "false"
+  java_tool_options: ""
+  cache_auto_detection_enabled: "true"
+  cache_group: "unidata"
+  cache_password: "password"
+  cache_port: "5701"
+  cache_port_autoincrement: "true"
+  system_node_id: ""
+  cache_public_address: ""
+  tz: "Europe/Moscow"
+  cache_kubernetes_enabled: "true"
+  cache_kubernetes_service_name: "mdm-service"
+  cache_tcp_ip_enabled: "false"
+  cache_tcp_ip_members: ""
+  cache_diagnostics_enabled: "true"
+  cache_security_recommendations: "debug"
+  cache_jet_enabled: "true"
+  cache_socket_bind_any: "false"
+  cache_rest_enabled: "true"
+  cache_integrity_checker_enabled: "true"

@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Chart.Name }}-deployment"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      volumes:
+        - name: docker-postgres-init-volume
+          configMap:
+            name: create-database-config
+            items:
+              - key: docker_postgres_init.sql
+                path: docker_postgres_init.sql
+        - name: create-database-volume
+          configMap:
+            name: create-database-config
+            items:
+              - key: create-db.sh
+                path: create-db.sh
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"
+      containers:
+        - name: "{{ .Chart.Name }}-container"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "cp /opt/scripts/* /tmp/ && chmod +x /tmp/create-db.sh && /tmp/create-db.sh ; sleep 99999999999"
+          imagePullPolicy: {{ .Values.podManagementPolicy }}
+          ports:
+            - name: {{ .Chart.Name }}
+              containerPort: {{ .Values.service.container_port }}
+          envFrom:
+            - configMapRef:
+                name: "{{ .Chart.Name }}-config"
+          volumeMounts:
+            - name: docker-postgres-init-volume
+              subPath: docker_postgres_init.sql
+              mountPath: /opt/scripts/docker_postgres_init.sql
+              readOnly: false
+            - name: create-database-volume
+              subPath: create-db.sh
+              mountPath: /opt/scripts/create-db.sh
+              readOnly: false

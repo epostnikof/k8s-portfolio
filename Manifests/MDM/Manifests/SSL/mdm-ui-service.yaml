@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mdm-ui-service
+  labels:
+    app: mdm
+  annotations:
+    app.kubernetes.io/name: mdm
+    app.kubernetes.io/part-of: mdm
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 600
+  selector:
+    app: mdm
+  ports:
+    - protocol: TCP
+      port: 9081
+      targetPort: 8080

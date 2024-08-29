@@ -1,0 +1,25 @@
+replicaCount: 3
+
+image:
+  repository: docker.universe-data.ru/unidata-ee/frontend
+  tag: "release-6-11-df1431a6"
+  pullPolicy: IfNotPresent
+
+frontend:
+  container_port: 80
+  forward_port: 80
+  ## Порт на котором будет доступна MDM по IP адресу:
+  node_port: 30082
+
+secret:
+  dockerconfigjson: []
+
+resources:
+  requests:
+    cpu: 2000m # 50% от 4 ядер
+    memory: 8Gi # 50% от 16 ГБ для requests
+    ephemeral_storage: "500Mi"
+  limits:
+    cpu: 2000m # Лимиты и requests могут совпадать, если вы хотите ограничить контейнер 50% CPU
+    memory: 12Gi # 75% от 16 ГБ
+    ephemeral_storage: "800Mi"

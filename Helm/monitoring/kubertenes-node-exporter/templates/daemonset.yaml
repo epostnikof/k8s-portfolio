@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/part-of: monitoring
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/name: {{ .Chart.Name }}
+    spec:
+      containers:
+      - args:
+        - --path.sysfs=/host/sys
+        - --path.rootfs=/host/root
+        - --no-collector.wifi
+        - --no-collector.hwmon
+        - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/pods/.+)($|/)
+        - --collector.netclass.ignored-devices=^(veth.*)$
+        name: {{ .Chart.Name }}
+        image: docker.universe-data.ru/smart-etl/monitoring/prom/node-exporter:latest
+        ports:
+          - containerPort: {{ .Values.service.containerPort }}
+            protocol: TCP
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+        volumeMounts:
+        - mountPath: /host/sys
+          mountPropagation: HostToContainer
+          name: sys
+          readOnly: true
+        - mountPath: /host/root
+          mountPropagation: HostToContainer
+          name: root
+          readOnly: true
+      volumes:
+      - hostPath:
+          path: /sys
+        name: sys
+      - hostPath:
+          path: /
+        name: root
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"

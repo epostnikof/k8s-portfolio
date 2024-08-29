@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zookeeper-cm
+data:
+  ALLOW_ANONYMOUS_LOGIN: "{{ .Values.zookeeper.config.allow_anonymous_login }}"
+  ZOO_ADMINSERVER_ENABLED: "{{ .Values.zookeeper.config.zoo_adminserver_enabled }}"
+  ZOO_AUTOPURGE_PURGEINTERVAL: "{{ .Values.zookeeper.config.zoo_autopurge_purgeinterval }}"
+  ZOO_AUTOPURGE_SNAPRETAINCOUNT: "{{ .Values.zookeeper.config.zoo_autopurge_snapretaincount }}"
+  ZOO_CFG_EXTRA: "{{ .Values.zookeeper.config.zoo_cfg_extra }}"
+  ZOO_INIT_LIMIT: "{{ .Values.zookeeper.config.zoo_init_limit }}"
+  ZOO_STANDALONE_ENABLED: "{{ .Values.zookeeper.config.zoo_standalone_enabled }}"
+  ZOO_SYNC_LIMIT: "{{ .Values.zookeeper.config.zoo_sync_limit }}"
+  ZOO_TICK_TIME: "{{ .Values.zookeeper.config.zoo_tick_time }}"

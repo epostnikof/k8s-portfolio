@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ui
+  template:
+    metadata:
+      labels:
+        app: ui
+    spec:
+      containers:
+        - name: ui
+          image: docker.universe-data.ru/unidata-ee/frontend:release-6-11-df1431a6
+          ports:
+            - containerPort: 80
+          env:
+            - name: BACKEND_ADDRESS
+              value: "http://mdm-ui-service:9081"
+            - name: CLIENT_MAX_BODY_SIZE
+              value: "100m"
+            - name: PROXY_SEND_TIMEOUT
+              value: "600s"
+            - name: PROXY_READ_TIMEOUT
+              value: "600s"
+            - name: SEND_TIMEOUT
+              value: "600s"
+            - name: TIMEZONE
+              value: "Europe/Moscow"
+          volumeMounts:
+            - name: customer-config
+              mountPath: /usr/share/nginx/html/customer.json
+              subPath: customer.json
+          resources:
+            requests:
+              ephemeral-storage: "500Mi"
+            limits:
+              ephemeral-storage: "800Mi"
+      volumes:
+        - name: customer-config
+          configMap:
+            name: ui-configmap
+      imagePullSecrets:
+        - name: my-regcred

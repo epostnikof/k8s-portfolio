@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ui-configmap
+data:
+  customer.json: |
+    {
+        "APP_TYPE": "systemAdmin,dataSteward,dataAdmin",
+        "serverUrl": "/universe-backend/api/",
+        "BULK_SELECTION_LIMIT": 30,
+        "CHECK_SOURCESYSTEM_WEIGHT_UNIQUE": false,
+        "OVERRIDES": [],
+        "EXTERNAL_MODULES": [],
+        "WIKI_HOST": null,
+        "WIKI_ENABLED": true
+    }

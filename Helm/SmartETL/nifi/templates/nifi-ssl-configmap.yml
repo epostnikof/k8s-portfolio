@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Chart.Name }}-ssl-cm"
+data:
+  security.sh: |
+    #!/bin/bash
+    set -ex -o allexport
+
+    ORGANISATION_UNIT=${ORGANISATION_UNIT:-'Universe data'}
+    ORGANISATION=${ORGANISATION:-'Universe'}
+    PUBLIC_DNS=${POD_NAME:-'nifi.tld'}
+    CITY=${CITY:-'Universe'}
+    STATE=${STATE:-'Spb'}
+    COUNTRY_CODE=${COUNTRY_CODE:-'RU'}
+    KEY_PASS=${KEY_PASS:-$KEYSTORE_PASSWORD}
+    KEYSTORE_PASS=${KEYSTORE_PASSWORD:-$NIFI_SENSITIVE_PROPS_KEY}
+    KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD:-$NIFI_SENSITIVE_PROPS_KEY}
+    KEYSTORE_PATH=${NIFI_HOME}/keytool/all/keystore.jks
+    KEYSTORE_TYPE=jks
+    KEYSTORE_FORMAT=jks
+    TRUSTSTORE_PASS=${TRUSTSTORE_PASS:-$NIFI_SENSITIVE_PROPS_KEY}
+    TRUSTSTORE_PASSWORD=${TRUSTSTORE_PASSWORD:-$NIFI_SENSITIVE_PROPS_KEY}
+    TRUSTSTORE_PATH=${NIFI_HOME}/keytool/all/truststore.jks
+    TRUSTSTORE_TYPE=jks
+    CERT_PATH=/etc/ssl/certs/keycloak.crt
+
+
+       if [[ ! -f "${KEYSTORE_PATH}" ]] && [[ ! -f "${TRUSTSTORE_PATH}" ]]
+    then
+    /opt/nifi/nifi-toolkit-current/bin/tls-toolkit.sh standalone \
+    -n localhost \
+    -P "${KEYSTORE_PASSWORD}" \
+    -S "${TRUSTSTORE_PASSWORD}" \
+    -o "${NIFI_HOME}/conf/" \
+    -d 10000 \
+    --subjectAlternativeNames "nifi-0.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-1.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-2.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-3.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-4.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-5.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-6.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-7.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-8.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-9.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-10.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-11.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-12.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-13.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-14.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-15.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-16.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-17.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-18.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-19.nifi.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-registry,\
+    nifi-registry-0.nifi-registry.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-registry-1.nifi-registry.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-registry-2.nifi-registry.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-registry-3.nifi-registry.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-registry-4.nifi-registry.${POD_NAMESPACE}.svc.cluster.local,\
+    nifi-registry-5.nifi-registry.${POD_NAMESPACE}.svc.cluster.local,\
+    ${K8S_NODES}" -O \
+    &&
+    mkdir -p ${NIFI_HOME}/keytool/all
+    cp -v ${NIFI_HOME}/conf/localhost/{keystore.jks,truststore.jks} ${NIFI_HOME}/keytool/all/
+    cp -v ${NIFI_HOME}/conf/{nifi-cert.pem,nifi-key.key} ${NIFI_HOME}/keytool/all/
+
+    keytool -import -noprompt -trustcacerts -alias keycloak.crt \
+    -file  ${CERT_PATH} \
+    -keystore ${KEYSTORE_PATH} \
+    -storetype ${KEYSTORE_TYPE} \
+    -storepass ${KEYSTORE_PASSWORD} || true
+
+    keytool -import -noprompt -trustcacerts -alias keycloak.crt \
+    -file  ${CERT_PATH} \
+    -keystore ${TRUSTSTORE_PATH} \
+    -storetype ${TRUSTSTORE_TYPE} \
+    -storepass ${KEYSTORE_PASSWORD} || true
+
+    fi
+
+
+    #/usr/bin/bash ${NIFI_HOME}/../scripts/secure.sh 
+    #eval ${NIFI_HOME}/../scripts/secure.sh

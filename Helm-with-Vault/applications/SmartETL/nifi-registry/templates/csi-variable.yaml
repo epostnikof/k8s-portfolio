@@ -1,0 +1,37 @@
+## VAULT
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-database-nifireg
+spec:
+  provider: vault
+  secretObjects:
+  - data:
+    - key: keystore-password
+      objectName: keystore-password
+    secretName: keystore-password
+    type: Opaque
+  - data:
+    - key: truststore-password
+      objectName: truststore-password
+    secretName: truststore-password
+    type: Opaque
+  - data:
+    - key: nifireg-postgresql-pass
+      objectName: nifireg-postgresql-pass
+    secretName: nifireg-postgresql-pass
+    type: Opaque
+  parameters:
+    vaultAddress: "{{ .Values.vault.address }}"
+    roleName: "{{ .Values.vault.rolename }}"
+    objects: |
+      - objectName: "keystore-password"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "keystore-password"
+      - objectName: "truststore-password"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "truststore-password"
+      - objectName: "nifireg-postgresql-pass"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "nifireg-postgresql-pass"

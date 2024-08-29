@@ -1,0 +1,259 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nifi
+  labels:
+    name: nifi
+    app: nifi
+  annotations:
+    app.kubernetes.io/name: nifi
+    app.kubernetes.io/part-of: nifi
+spec:
+  revisionHistoryLimit: 1
+  serviceName: nifi
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: nifi
+  template:
+    metadata:
+      labels:
+        app: nifi
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      setHostnameAsFQDN: true
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: false
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: wait-for-zookeeper
+          image: docker.io/busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Connecting to Zookeeper ${NIFI_ZK_CONNECT_STRING}"
+              until nc -vzw 1 zookeeper 2181 ; do
+                echo "Waiting for zookeeper to start"
+                sleep 3
+              done
+          envFrom:
+            - configMapRef:
+                name: nifi-cm
+                optional: false
+          resources:
+            requests:
+              cpu: 20m
+              memory: 10Mi
+            limits:
+              cpu: 20m
+              memory: 10Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      containers:
+        - name: nifi
+          image: docker.io/apache/nifi:1.24.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 11443
+              name: cluster
+            - containerPort: 8443
+              name: https
+            - containerPort: 6342
+              name: cluster-lb
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP # Use pod ip
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name # Use pod name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace # Use pod namespace
+            - name: NIFI_UI_BANNER_TEXT
+              value: $(POD_NAME) # Use pod name for banner
+            - name: NIFI_WEB_HTTPS_HOST
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as web host
+            - name: NIFI_CLUSTER_NODE_ADDRESS
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as node address
+            - name: NIFI_REMOTE_INPUT_SOCKET_HOST
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as input socket address
+            - name: NIFI_REMOTE_INPUT_HOST
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as input host address
+            - name: HOSTNAME
+              value: $(POD_IP) # Use pod ip as hostname
+            - name: NODE_IDENTITY
+              value: $(POD_NAME) # Use pod name as identity
+
+          envFrom:
+            - configMapRef:
+                name: nifi-cm
+                optional: false
+          volumeMounts:
+            ### NFS
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/data
+              subPath: data
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/keytool
+              subPath: keytool
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/extensions
+              subPath: extensions
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/lib/postgresql-42.2.2.jar
+              subPath: custom-libs/postgresql-42.2.2.jar
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/conf/authorizers.xml
+              subPath: conf/authorizers.xml
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/flow
+              subPath: flow
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/conf/logback.xml
+              subPath: conf/logback.xml
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/database_repository
+              subPath: database_repository
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/flowfile_repository
+              subPath: flowfile_repository
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/content_repository
+              subPath: content_repository
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/provenance_repository
+              subPath: provenance_repository
+              readOnly: false
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/status_repository
+              subPath: status_repository
+              readOnly: false
+            #IMPORT DATA
+            - name: nfs-pv-nifi-data
+              mountPath: /opt/nifi/nifi-current/import
+              subPath: import
+              readOnly: false
+            - name: scripts
+              mountPath: /scripts/security.sh
+              subPath: security.sh
+              readOnly: false
+            - name: start-script
+              mountPath: /opt/nifi/scripts/start.sh
+              subPath: start.sh
+              readOnly: false
+            # Доменный сертификат
+            - name: cert-and-key
+              mountPath: /etc/ssl/certs/keycloak.crt
+              subPath: keycloak.crt
+              readOnly: false
+            - name: cert-and-key
+              mountPath: /etc/ssl/certs/keycloak.key
+              subPath: keycloak.key
+              readOnly: false
+            # Нужен для взаимодействия подов друг с другом
+            - name: inside-cluster-ssl
+              mountPath: /etc/ssl/certs/cluster.crt
+              subPath: cluster.crt
+              readOnly: false
+            - name: inside-cluster-ssl
+              mountPath: /etc/ssl/certs/cluster.key
+              # mountPath: /tmp/cluster.key
+              subPath: cluster.key
+              readOnly: false
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /scripts/security.sh
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - java
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: cluster
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          resources:
+            requests:
+              cpu: 400m
+              memory: 2Gi
+            limits:
+              cpu: 400m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: nfs-pv-nifi-data
+          persistentVolumeClaim:
+            claimName: nfs-pvc-nifi-data
+        - name: scripts
+          configMap:
+            name: nifi-ssl-cm
+            optional: false
+            defaultMode: 0755
+        - name: start-script
+          configMap:
+            name: start.sh
+            optional: false
+            defaultMode: 0755
+        - name: cert-and-key
+          secret:
+            secretName: cluster-k8s-ov-universe-data-ru-tls
+            items:
+              - key: tls.crt
+                path: keycloak.crt
+              - key: tls.key
+                path: keycloak.key
+                mode: 0600
+        - name: inside-cluster-ssl
+          secret:
+            secretName: nifi-cluster-secret
+            items:
+              - key: tls.crt
+                path: cluster.crt
+              - key: tls.key
+                path: cluster.key
+                mode: 0600

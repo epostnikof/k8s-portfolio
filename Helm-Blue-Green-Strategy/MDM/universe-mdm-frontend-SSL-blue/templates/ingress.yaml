@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.ingress.domain }}
+      secretName: "{{ .Chart.Name }}-tls"
+  rules:
+    - host: {{ .Values.ingress.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Chart.Name }}-service"
+                port:
+                  number: {{ .Values.frontend.forward_port }}
+  ingressClassName: nginx

@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nifi-registry
+  labels:
+    app: nifi-registry
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-path: "/"
+spec:
+  tls:
+    - hosts:
+        - cluster-k8s.ov.universe-data.ru
+      secretName: cluster-k8s-ov-universe-data-ru-tls
+  rules:
+    - host: cluster-k8s.ov.universe-data.ru
+      http:
+        paths:
+          - path: /nifi-registry
+            pathType: Prefix
+            backend:
+              service:
+                name: nifi-registry
+                port:
+                  number: 18443
+  ingressClassName: nginx

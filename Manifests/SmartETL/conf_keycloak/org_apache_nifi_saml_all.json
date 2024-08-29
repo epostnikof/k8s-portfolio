@@ -1,0 +1,92 @@
+{
+  "clientId": "org:apache:nifi:saml:all",
+  "name": "",
+  "description": "",
+  "rootUrl": "https://cluster-k8s.ov.universe-data.ru",
+  "adminUrl": "https://cluster-k8s.ov.universe-data.ru/nifi-api/access/saml/metadata",
+  "baseUrl": "/nifi",
+  "surrogateAuthRequired": false,
+  "enabled": true,
+  "alwaysDisplayInConsole": false,
+  "clientAuthenticatorType": "client-secret",
+  "secret": "DQ7CF7OX2LIxl8VF7WQTdlH4PIoM1czQ",
+  "redirectUris": [
+    "/nifi-api/access/saml/*",
+    "*"
+  ],
+  "webOrigins": [],
+  "notBefore": 0,
+  "bearerOnly": false,
+  "consentRequired": false,
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": false,
+  "publicClient": false,
+  "frontchannelLogout": true,
+  "protocol": "saml",
+  "attributes": {
+    "saml_assertion_consumer_url_redirect": "https://cluster-k8s.ov.universe-data.ru/nifi-api/access/saml/login/consumer",
+    "saml.multivalued.roles": "false",
+    "saml.force.post.binding": "true",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "saml.server.signature.keyinfo.ext": "false",
+    "use.refresh.tokens": "true",
+    "saml.signing.certificate": "MIIFzjCCBLagAwIBAgIHC0rbWdNBBTANBgkqhkiG9w0BAQsFADAjMQ0wCwYDVQQLDAROSUZJMRIwEAYDVQQDDAlsb2NhbGhvc3QwIBcNMjQwMzA3MTE1NDMyWhgPMjA1MTA3MjQxMTU0MzJaMCMxDTALBgNVBAsMBE5JRkkxEjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAIrsP7GLUwISYY7VoYqPyEiu4S6gCVv2qTBYmuq7Tgk63M1cuWfn2Ru0b5v1oE23WLXyzGu8kO30ZIpul5R1LC7w6IBuMjMcmhXXus3/G1w3ne+Kgm0xGoqDL+MwNrUtvCracyRPR8uUOpSRu9wJKSYGa82Y15rgVMbCHLumaQUcPjK9wexMjU03IrFMiNR/ENzSYpvfiNmh8x5McOKSJimRjZ9fjKUZR8cMd5FPerBp8XBejN+/HxW7kKF/NFgUi0LK8eqvZALunDyGqttOlugAaUn00QyMlyPjXoR/D67lyBQCJ07ARHtCZPnsRgPHW4RBZqAc/myW559p3vmzxNMCAwEAAaOCAwMwggL/MAkGA1UdEwQCMAAwDgYDVR0PAQH/BAQDAgP4MB0GA1UdDgQWBBQ+0HE3IQw5ZyT9ZJNXWkBBgcFT+jAfBgNVHSMEGDAWgBTgLsTu0wjicHeBOHyIbWcVhiVmoDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwggKBBgNVHREEggJ4MIICdIIJbG9jYWxob3N0giZuaWZpLTAubmlmaS51bml2ZXJzZS5zdmMuY2x1c3Rlci5sb2NhbIImbmlmaS0xLm5pZmkudW5pdmVyc2Uuc3ZjLmNsdXN0ZXIubG9jYWyCJm5pZmktMi5uaWZpLnVuaXZlcnNlLnN2Yy5jbHVzdGVyLmxvY2FsgiZuaWZpLTMubmlmaS51bml2ZXJzZS5zdmMuY2x1c3Rlci5sb2NhbIImbmlmaS00Lm5pZmkudW5pdmVyc2Uuc3ZjLmNsdXN0ZXIubG9jYWyCJm5pZmktNS5uaWZpLnVuaXZlcnNlLnN2Yy5jbHVzdGVyLmxvY2FsgiZuaWZpLTYubmlmaS51bml2ZXJzZS5zdmMuY2x1c3Rlci5sb2NhbIImbmlmaS03Lm5pZmkudW5pdmVyc2Uuc3ZjLmNsdXN0ZXIubG9jYWyCJm5pZmktOS5uaWZpLnVuaXZlcnNlLnN2Yy5jbHVzdGVyLmxvY2FsgiduaWZpLTEwLm5pZmkudW5pdmVyc2Uuc3ZjLmNsdXN0ZXIubG9jYWyCJ25pZmktMTEubmlmaS51bml2ZXJzZS5zdmMuY2x1c3Rlci5sb2NhbIInbmlmaS0xMi5uaWZpLnVuaXZlcnNlLnN2Yy5jbHVzdGVyLmxvY2FsgiduaWZpLTEzLm5pZmkudW5pdmVyc2Uuc3ZjLmNsdXN0ZXIubG9jYWyCHWs4cy1ub2RlMy5vdi51bml2ZXJzZS1kYXRhLnJ1gh1rOHMtbm9kZTIub3YudW5pdmVyc2UtZGF0YS5ydYIdazhzLW5vZGUxLm92LnVuaXZlcnNlLWRhdGEucnUwDQYJKoZIhvcNAQELBQADggEBAHqYEzt4uw1PkKjdJ27sIzhFHRl1vffGo/zmUwyfPTzQUwA6yP3uxB0lW2W5HICP2IjOyqEaMIvPC4hRKoMVgCgXhAZJx80otXdCezlTOv08w0H5wM3zWPCeitMQW1IFLdN5EEIXrmqkcAwhtcFajiHA5uevBFfX3RnEirsF+wL8JgkeGY03e0kPF100GS4I20RJtp4GIHgrUIX9NTbmzXgbmAz205fuU+SqJI7bdNkWov/yZ8nz3nmY508xoAG349DavBgO30xd2S3aP6O+369+1e2/D7l5vH2LqB5rPpHhQv4v5wrrqWQyJfl2xRfKgIlp6SzLNCDNZwM71vBQtAk=",
+    "oidc.ciba.grant.enabled": "false",
+    "backchannel.logout.session.required": "false",
+    "client_credentials.use_refresh_token": "false",
+    "saml.signature.algorithm": "RSA_SHA256",
+    "saml.client.signature": "true",
+    "require.pushed.authorization.requests": "false",
+    "saml.allow.ecp.flow": "false",
+    "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "KEY_ID",
+    "id.token.as.detached.signature": "false",
+    "saml.assertion.signature": "false",
+    "client.secret.creation.time": "1708597198",
+    "saml_single_logout_service_url_post": "https://cluster-k8s.ov.universe-data.ru/nifi-api/access/saml/single-logout/consumer",
+    "saml.encrypt": "false",
+    "login_theme": "keycloak",
+    "saml_assertion_consumer_url_post": "https://cluster-k8s.ov.universe-data.ru/nifi-api/access/saml/login/consumer",
+    "saml.server.signature": "true",
+    "exclude.session.state.from.auth.response": "false",
+    "saml.artifact.binding.identifier": "2y7ReyBuq9l4an7zGabfTAdK3Wc=",
+    "saml.artifact.binding": "false",
+    "saml_single_logout_service_url_redirect": "https://cluster-k8s.ov.universe-data.ru/nifi-api/access/saml/single-logout/consumer",
+    "saml_force_name_id_format": "false",
+    "saml.encryption.certificate": "MIIDojCCAoqgAwIBAgIHCvoCLEUfVzANBgkqhkiG9w0BAQsFADAjMQ0wCwYDVQQLDAROSUZJMRIwEAYDVQQDDAlsb2NhbGhvc3QwIBcNMjQwMzA2MTExMjU4WhgPMjA1MTA3MjMxMTEyNThaMEAxDTALBgNVBAsMBE5JRkkxLzAtBgNVBAMMJm5pZmktMC5uaWZpLnVuaXZlcnNlLnN2Yy5jbHVzdGVyLmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtpIHPj+xXKVQss8LpXyjZcA/sIhTQB6y3z4hn/sgfTsFxXuLZFG+F1e2JraQiWK3Z3pIX4UAEmeJRDD2lulWxZcbc66faR2ZpBH5OvCpP8Yr9PRdYDIfFsFeJzi77zgul0GeOibDhg26tx50JYgocy19wUjuBsnVonFzqFuWa4TTFrIK3rMPPLV0TP87amg2nWt1y6X7mO/uWSxCH1MffIkmp2RDwDk3HDv0acUZokFknq/+3DE8RplG1zJ04XC0mDEt+6RjSF8SnQtpsm5nEhfrL0EhXrFgtazsbt9b6OOrIjnAP5Hx9vIAODEVozOBTYpNe1TuKKz28hL3U0VfiQIDAQABo4G7MIG4MAkGA1UdEwQCMAAwDgYDVR0PAQH/BAQDAgP4MB0GA1UdDgQWBBS3zV70z4cPxamB0KVDY/sdWaBR/jAfBgNVHSMEGDAWgBQYzX6av/m4LhW9b9duboBB6/oD9jAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwPAYDVR0RBDUwM4ImbmlmaS0wLm5pZmkudW5pdmVyc2Uuc3ZjLmNsdXN0ZXIubG9jYWyCCWxvY2FsaG9zdDANBgkqhkiG9w0BAQsFAAOCAQEADpELmznaQh+QBit3WwEfnLCpI90Nzt0pRj9uSmqg5GBcUV9RcTkoMJ8Jmna9wiM72suUlGvpy1X3nfLQAJONm3oTEqxW+8mCfXr09kaD+WdqYoHAMonMXpTJ8DBgGF/EGowl1a/2tHOPOdLBuSGn81ikRTWUy+huXUZTcO891oorUlmiORGu5ueAt8X3OgT7BiGaxdEVq9ca/KJ/lgUXaAFRxLYmEht9Wo2p2+Hrm6cRbaF4SQZvvPfYffGTiBnqapdROircFl9FU7YJXd1UErVEBx9GubXTfqM+0Wm8ydNIgSvwnoyOE75axJmA+mgr5+FgLGIBmEscjm2N+vlDCQ==",
+    "tls.client.certificate.bound.access.tokens": "false",
+    "saml.authnstatement": "true",
+    "display.on.consent.screen": "false",
+    "saml_name_id_format": "username",
+    "saml.onetimeuse.condition": "false",
+    "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#"
+  },
+  "authenticationFlowBindingOverrides": {},
+  "fullScopeAllowed": true,
+  "nodeReRegistrationTimeout": -1,
+  "protocolMappers": [
+    {
+      "name": "Group mapper",
+      "protocol": "saml",
+      "protocolMapper": "saml-group-membership-mapper",
+      "consentRequired": false,
+      "config": {
+        "single": "true",
+        "attribute.nameformat": "Basic",
+        "full.path": "false",
+        "attribute.name": "member"
+      }
+    }
+  ],
+  "defaultClientScopes": [
+    "role_list"
+  ],
+  "optionalClientScopes": [],
+  "access": {
+    "view": true,
+    "configure": true,
+    "manage": true
+  }
+}

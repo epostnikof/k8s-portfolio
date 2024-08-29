@@ -1,0 +1,45 @@
+## VAULT
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-database-keycloak
+spec:
+  provider: vault
+  secretObjects:
+  - data:
+    - key: kc-admin-user
+      objectName: kc-admin-user
+    secretName: kc-admin-user
+    type: Opaque
+  - data:
+    - key: kc-admin-password
+      objectName: kc-admin-password
+    secretName: kc-admin-password
+    type: Opaque
+  - data:
+    - key: kc-db-username
+      objectName: kc-db-username
+    secretName: kc-db-username
+    type: Opaque
+  - data:
+    - key: kc-postgresql-pass
+      objectName: kc-postgresql-pass
+    secretName: kc-postgresql-pass
+    type: Opaque
+  parameters:
+    vaultAddress: "{{ .Values.vault.address }}"
+    roleName: "{{ .Values.vault.rolename }}"
+    objects: |
+      - objectName: "kc-admin-user"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "kc-admin-user"
+      - objectName: "kc-admin-password"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "kc-admin-password"
+      - objectName: "kc-db-username"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "kc-db-username"
+      - objectName: "kc-postgresql-pass"
+        secretPath: "{{ .Values.vault.secret_path }}"
+        secretKey: "kc-postgresql-pass"

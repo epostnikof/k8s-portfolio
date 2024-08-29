@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mdm-service
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+  ports:
+    - protocol: TCP
+      port: 5701

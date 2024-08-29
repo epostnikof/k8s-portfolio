@@ -1,0 +1,418 @@
+variables:
+  # Переменные для настройки соединения с кластером Kubernetes
+  BACKEND_MDM_HELM_RELEASE_NAME: "universe-mdm-backend"
+  FRONTEND_MDM_HELM_RELEASE_NAME: "universe-mdm-frontend"
+  NIFI_HELM_RELEASE_NAME: "nifi"
+  NIFI_REGISTRY_HELM_RELEASE_NAME: "nifi-registry"
+  KEYCLOAK_HELM_RELEASE_NAME: "keycloak"
+  SMARTETL_NAMESPACE: "smart-etl"
+  MDM_NAMESPACE: "universe-mdm"
+  MDM_BACKEND_CHART_PATH: "./Helm-with-Vault/applications/MDM/universe-mdm-backend"
+  MDM_FRONTEND_CHART_PATH: "./Helm-with-Vault/applications/MDM/universe-mdm-frontend-SSL"
+  SMARTETL_KEYCLOAK_PATH: "./Helm-with-Vault/applications/SmartETL/keycloak"
+  SMARTETL_NIFI_PATH: "./Helm-with-Vault/applications/SmartETL/nifi"
+  SMARTETL_NIFI_REGISTRY_PATH: "./Helm-with-Vault/applications/SmartETL/nifi-registry"
+  CHART_VERSION: ${CI_COMMIT_SHORT_SHA}
+  K8SCONFIG: ${K8SCONFIG}
+  DEPLOY_FLAG: "deploy-flag"
+  # Monitoring
+  GRAFANA_HELM_RELEASE_NAME: "grafana"
+  PROMETHEUS_HELM_RELEASE_NAME: "prometheus"
+  NODE_EXPORTER_HELM_RELEASE_NAME: "node-exporter"
+  KUBE_STATE_METRICS_HELM_RELEASE_NAME: "kube-state-metrics"
+  GRAFANA_CHART_PATH: "./Helm/monitoring/kubertenes-grafana"
+  PROMETHEUS_CHART_PATH: "./Helm/monitoring/kubertenes-prometheus"
+  NODE_EXPORTER_CHART_PATH: "./Helm/monitoring/kubertenes-node-exporter"
+  KUBE_STATE_METRICS_CHART_PATH: "./Helm/monitoring/kube-state-metrics"
+  # Vault
+
+stages:
+  - check_vault
+  - deploy
+  - rollback
+
+### Vault ###
+
+prepare_vault:
+  stage: check_vault
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - chmod +x ./ci/prepare_vault.sh
+    # vault-0 vault-1 - имена pod с Vault
+    # расширьте этот список по необходимости
+    - ./ci/prepare_vault.sh "$VAULT_ROOT_TOKEN" "$VAULT_USEAL_KEY_1" "$VAULT_USEAL_KEY_2" "$VAULT_USEAL_KEY_3" "vault-0" "vault-1"
+  rules:
+    # Только если есть изменения в ветке
+    - changes:
+        - Helm-with-Vault/applications/**/*
+      # Только из веток main и dev
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+
+    #### DEPLOY ####
+deploy-mdm-backend:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${BACKEND_MDM_HELM_RELEASE_NAME} ${MDM_BACKEND_CHART_PATH} --namespace ${MDM_NAMESPACE} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  # Нужны чтобы передать сформировать зависимость Deploy и Rollback
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    # Только если есть изменения в ветке
+    - changes:
+        - Helm-with-Vault/applications/MDM/universe-mdm-backend/**/*
+      # Только из веток main и dev
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-mdm-frontend-ssl:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${FRONTEND_MDM_HELM_RELEASE_NAME} ${MDM_FRONTEND_CHART_PATH} --namespace ${MDM_NAMESPACE} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/MDM/universe-mdm-frontend-SSL/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-smartetl-nifi:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${NIFI_HELM_RELEASE_NAME} ${SMARTETL_NIFI_PATH} --namespace ${SMARTETL_NAMESPACE} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/SmartETL/nifi/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-smartetl-nifi-registry:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${NIFI_REGISTRY_HELM_RELEASE_NAME} ${SMARTETL_NIFI_REGISTRY_PATH} --namespace ${SMARTETL_NAMESPACE} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/SmartETL/nifi-registry/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-smartetl-keycloak:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${KEYCLOAK_HELM_RELEASE_NAME} ${SMARTETL_KEYCLOAK_PATH} --namespace ${SMARTETL_NAMESPACE} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/SmartETL/keycloak/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-grafana:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${GRAFANA_HELM_RELEASE_NAME} ${GRAFANA_CHART_PATH} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm/monitoring/kubertenes-grafana/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-prometheus:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${PROMETHEUS_HELM_RELEASE_NAME} ${PROMETHEUS_CHART_PATH} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm/monitoring/kubertenes-prometheus/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-kube-state-metrics:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${KUBE_STATE_METRICS_HELM_RELEASE_NAME} ${KUBE_STATE_METRICS_CHART_PATH} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm/monitoring/kube-state-metrics/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+deploy-node-exporter:
+  stage: deploy
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - helm upgrade --install ${NODE_EXPORTER_HELM_RELEASE_NAME} ${NODE_EXPORTER_CHART_PATH} --version ${CHART_VERSION}
+    - touch ${DEPLOY_FLAG}
+  artifacts:
+    paths:
+      - ${DEPLOY_FLAG}
+  rules:
+    - changes:
+        - Helm/monitoring/kubertenes-node-exporter/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+
+### ROLLBACK ###
+rollback-mdm-backend:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${BACKEND_MDM_HELM_RELEASE_NAME} -n ${MDM_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${BACKEND_MDM_HELM_RELEASE_NAME} -n ${MDM_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${BACKEND_MDM_HELM_RELEASE_NAME} $PREVIOUS_RELEASE -n ${MDM_NAMESPACE}; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/MDM/universe-mdm-backend/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-mdm-backend
+
+rollback-mdm-frontend-ssl:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${FRONTEND_MDM_HELM_RELEASE_NAME} -n ${MDM_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${FRONTEND_MDM_HELM_RELEASE_NAME} -n ${MDM_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${FRONTEND_MDM_HELM_RELEASE_NAME} $PREVIOUS_RELEASE -n ${MDM_NAMESPACE}; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/MDM/universe-mdm-frontend-SSL/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-mdm-frontend-ssl
+#
+rollback-smartetl-nifi:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${NIFI_HELM_RELEASE_NAME} -n ${SMARTETL_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${NIFI_HELM_RELEASE_NAME} -n ${SMARTETL_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${NIFI_HELM_RELEASE_NAME} $PREVIOUS_RELEASE -n ${SMARTETL_NAMESPACE}; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/SmartETL/nifi/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-smartetl-nifi
+
+rollback-smartetl-nifi-registry:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${NIFI_REGISTRY_HELM_RELEASE_NAME} -n ${SMARTETL_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${NIFI_REGISTRY_HELM_RELEASE_NAME} -n ${SMARTETL_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${NIFI_REGISTRY_HELM_RELEASE_NAME} $PREVIOUS_RELEASE -n ${SMARTETL_NAMESPACE}; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/SmartETL/nifi-registry/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-smartetl-nifi-registry
+
+rollback-smartetl-keycloak:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${KEYCLOAK_HELM_RELEASE_NAME} -n ${SMARTETL_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${KEYCLOAK_HELM_RELEASE_NAME} -n ${SMARTETL_NAMESPACE} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${KEYCLOAK_HELM_RELEASE_NAME} $PREVIOUS_RELEASE -n ${SMARTETL_NAMESPACE}; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm-with-Vault/applications/SmartETL/keycloak/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-smartetl-keycloak
+
+rollback-grafana:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${GRAFANA_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${GRAFANA_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${GRAFANA_HELM_RELEASE_NAME} $PREVIOUS_RELEASE; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm/monitoring/kubertenes-grafana/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-grafana
+
+rollback-prometheus:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${PROMETHEUS_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${PROMETHEUS_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${PROMETHEUS_HELM_RELEASE_NAME} $PREVIOUS_RELEASE; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm/monitoring/kubertenes-prometheus/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-prometheus
+
+rollback-kube-state-metrics:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${KUBE_STATE_METRICS_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${KUBE_STATE_METRICS_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${KUBE_STATE_METRICS_HELM_RELEASE_NAME} $PREVIOUS_RELEASE; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm/monitoring/kube-state-metrics/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-kube-state-metrics
+
+rollback-node-exporter:
+  stage: rollback
+  image: docker.universe-data.ru/smart-etl/k8s-ci:1.0
+  before_script:
+    - mkdir -p ~/.kube/
+    - echo $K8SCONFIG | base64 --decode >> ~/.kube/config
+    - chmod 600 ~/.kube/config
+  script:
+    - export CURRENT_RELEASE=$(helm history ${NODE_EXPORTER_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{print $1}')
+    - echo "Current release number is $CURRENT_RELEASE"
+    - export PREVIOUS_RELEASE=$(helm history ${NODE_EXPORTER_HELM_RELEASE_NAME} 2>/dev/null | tail -n 1 | awk '{if ($1 > 1) print $1-1; else print $1}')
+    - echo "Start Rollback to $PREVIOUS_RELEASE"
+    - if [ -f ${DEPLOY_FLAG} ]; then helm rollback ${NODE_EXPORTER_HELM_RELEASE_NAME} $PREVIOUS_RELEASE; else echo "Deploy flag not found, rollback not executed"; exit 1; fi
+  rules:
+    - changes:
+        - Helm/monitoring/kubertenes-node-exporter/**/*
+      if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  dependencies:
+    - deploy-node-exporter

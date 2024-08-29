@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: exporter
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/part-of: monitoring
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: exporter
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.service.http_containerPort }}
+          initialDelaySeconds: 6
+          timeoutSeconds: 6
+        name: {{ .Chart.Name }}
+        ports:
+        - containerPort: {{ .Values.service.http_containerPort }}
+          name: http-metrics
+        - containerPort: {{ .Values.service.telemetry_containerPort }}
+          name: telemetry
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.service.telemetry_containerPort }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsUser: 65534
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: {{ .Chart.Name }}
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"

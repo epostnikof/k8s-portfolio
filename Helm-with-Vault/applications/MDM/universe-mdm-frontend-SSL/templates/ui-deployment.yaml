@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: universe-mdm
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.frontend.container_port }}
+          env:
+            - name: BACKEND_ADDRESS
+              value: "http://mdm-ui-service:9081"
+            - name: CLIENT_MAX_BODY_SIZE
+              value: "100m"
+            - name: PROXY_SEND_TIMEOUT
+              value: "600s"
+            - name: PROXY_READ_TIMEOUT
+              value: "600s"
+            - name: SEND_TIMEOUT
+              value: "600s"
+            - name: TIMEZONE
+              value: "Europe/Moscow"
+          volumeMounts:
+            - name: customer-config
+              mountPath: /usr/share/nginx/html/customer.json
+              subPath: customer.json
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+              ephemeral-storage: {{ .Values.resources.requests.ephemeral_storage }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+              ephemeral-storage: {{ .Values.resources.limits.ephemeral_storage }}
+      volumes:
+        - name: customer-config
+          configMap:
+            name: "{{ .Chart.Name }}-configmap"
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-pull-secret"

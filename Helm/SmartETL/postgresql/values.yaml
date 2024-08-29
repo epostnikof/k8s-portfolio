@@ -1,0 +1,20 @@
+---
+dockerconfigjson: []
+image:
+  repository: docker.universe-data.ru/smart-etl/postgres
+  pullPolicy: IfNotPresent
+  tag: "14-alpine"
+
+service:
+  container_port: 5432
+
+external_postgres:
+  ##Задаём параметры для подключения к серверу PostgreSQL##
+  postgres_hostname: "10.21.2.33"
+  postgres_inner_port: "5433"
+  postgres_password: "notpostgres"
+  postgres_user: postgres
+  ##Установим пароль для пользователя keycloak, чтобы он мог подключаться к базе данных keycloak
+  keycloak_user_password: "notpostgres"
+  ##Установим пароль для пользователя nifireg, чтобы он мог подключаться к базе данных nifireg
+  nifireg_user_password: "notpostgres"

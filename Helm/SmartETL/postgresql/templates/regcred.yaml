@@ -1,0 +1,9 @@
+{{- if .Values.dockerconfigjson }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Chart.Name }}-regcred
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{ .Values.dockerconfigjson | quote }}
+{{- end }}

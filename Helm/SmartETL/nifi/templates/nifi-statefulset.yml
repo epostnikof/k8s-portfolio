@@ -1,0 +1,270 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    name: {{ .Chart.Name }}
+    app: {{ .Chart.Name }}
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: smartetl
+  annotations:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+spec:
+  revisionHistoryLimit: {{ .Values.nifi.revisionHistoryLimit }}
+  serviceName: {{ .Chart.Name }}
+  podManagementPolicy: {{ .Values.nifi.podManagementPolicy }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      setHostnameAsFQDN: true
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: false
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"
+      initContainers:
+        - name: wait-for-zookeeper
+          image: "{{ .Values.nifi.busybox.repository }}:{{ .Values.nifi.busybox.tag | default .Chart.AppVersion }}"
+          command:
+            - sh
+            - -c
+            - |
+              echo "Connecting to Zookeeper ${NIFI_ZK_CONNECT_STRING}"
+              until nc -vzw 1 zookeeper 2181 ; do
+                echo "Waiting for zookeeper to start"
+                sleep 3
+              done
+          envFrom:
+            - configMapRef:
+                name: "{{ .Chart.Name }}-cm"
+                optional: false
+          resources:
+            requests:
+              cpu: 20m
+              memory: 10Mi
+            limits:
+              cpu: 20m
+              memory: 10Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.nifi.image.repository }}:{{ .Values.nifi.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.nifi.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.nifi.service.http_port }}
+              name: http
+            - containerPort: {{ .Values.nifi.service.cluster_port }}
+              name: cluster
+            - containerPort: {{ .Values.nifi.service.https_port }}
+              name: https
+            - containerPort: {{ .Values.nifi.service.cluster_lb_port }}
+              name: cluster-lb
+            - containerPort: {{ .Values.nifi.service.monitoring_port }}
+              name: metrics
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP # Use pod ip
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name # Use pod name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace # Use pod namespace
+            - name: NIFI_UI_BANNER_TEXT
+              value: $(POD_NAME) # Use pod name for banner
+            - name: NIFI_WEB_HTTPS_HOST
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as web host
+            - name: NIFI_CLUSTER_NODE_ADDRESS
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as node address
+            - name: NIFI_REMOTE_INPUT_SOCKET_HOST
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as input socket address
+            - name: NIFI_REMOTE_INPUT_HOST
+              value: $(POD_NAME).nifi.$(POD_NAMESPACE).svc.cluster.local # Use pod fqdn as input host address
+            - name: HOSTNAME
+              value: $(POD_IP) # Use pod ip as hostname
+            - name: NODE_IDENTITY
+              value: $(POD_NAME) # Use pod name as identity
+
+          envFrom:
+            - configMapRef:
+                name: "{{ .Chart.Name }}-cm"
+                optional: false
+          volumeMounts:
+            ### NFS
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/data
+              subPath: data
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/keytool
+              subPath: keytool
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/extensions
+              subPath: extensions
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/lib/postgresql-42.2.2.jar
+              subPath: custom-libs/postgresql-42.2.2.jar
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/conf/authorizers.xml
+              subPath: conf/authorizers.xml
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/flow
+              subPath: flow
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/conf/logback.xml
+              subPath: conf/logback.xml
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/database_repository
+              subPath: database_repository
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/flowfile_repository
+              subPath: flowfile_repository
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/content_repository
+              subPath: content_repository
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/provenance_repository
+              subPath: provenance_repository
+              readOnly: false
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/status_repository
+              subPath: status_repository
+              readOnly: false
+            #IMPORT DATA
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /opt/nifi/nifi-current/import
+              subPath: import
+              readOnly: false
+            - name: scripts
+              mountPath: /scripts/security.sh
+              subPath: security.sh
+              readOnly: false
+            - name: start-script
+              mountPath: /opt/nifi/scripts/start.sh
+              subPath: start.sh
+              readOnly: false
+            # Доменный сертификат
+            - name: cert-and-key
+              mountPath: /etc/ssl/certs/keycloak.crt
+              subPath: keycloak.crt
+              readOnly: false
+            - name: cert-and-key
+              mountPath: /etc/ssl/certs/keycloak.key
+              subPath: keycloak.key
+              readOnly: false
+            # Нужен для взаимодействия подов друг с другом
+            - name: inside-cluster-ssl
+              mountPath: /etc/ssl/certs/cluster.crt
+              subPath: cluster.crt
+              readOnly: false
+            - name: inside-cluster-ssl
+              mountPath: /etc/ssl/certs/cluster.key
+              # mountPath: /tmp/cluster.key
+              subPath: cluster.key
+              readOnly: false
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /scripts/security.sh
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - java
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: cluster
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          resources:
+            requests:
+              cpu: {{ .Values.nifi.resources.requests.cpu }}
+              memory: {{ .Values.nifi.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.nifi.resources.limits.cpu }}
+              memory: {{ .Values.nifi.resources.limits.memory }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: nfs-pv-{{ .Chart.Name }}-data
+          persistentVolumeClaim:
+            claimName: nfs-pvc-{{ .Chart.Name }}-data
+        - name: scripts
+          configMap:
+            name: "{{ .Chart.Name }}-ssl-cm"
+            optional: false
+            defaultMode: 0755
+        - name: start-script
+          configMap:
+            name: start.sh
+            optional: false
+            defaultMode: 0755
+        - name: cert-and-key
+          secret:
+            secretName: "{{ .Chart.Name }}-tls"
+            items:
+              - key: tls.crt
+                path: keycloak.crt
+              - key: tls.key
+                path: keycloak.key
+                mode: 0600
+        - name: inside-cluster-ssl
+          secret:
+            secretName: "{{ .Chart.Name }}-cluster-secret"
+            items:
+              - key: tls.crt
+                path: cluster.crt
+              - key: tls.key
+                path: cluster.key
+                mode: 0600

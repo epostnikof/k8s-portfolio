@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mdm-deployment
+spec:
+  replicas: 3
+  podManagementPolicy: OrderedReady
+  selector:
+    matchLabels:
+      app: mdm
+  template:
+    metadata:
+      labels:
+        app: mdm
+    spec:
+      containers:
+        - name: mdm-container
+          image: docker.universe-data.ru/unidata-ee/backend:release-6-11-f8cef2ba
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: config-mdm-deployment
+          env:
+            - name: SYSTEM_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              ephemeral-storage: "2Gi"
+            limits:
+              ephemeral-storage: "3Gi"
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - java
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /universe-backend/api
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+
+      imagePullSecrets:
+        - name: my-regcred

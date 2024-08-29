@@ -1,0 +1,21 @@
+# Ignore everything in the VOLUME_DATA directory except specific directories
+Manifests/MDM/Manifests/not_SSL/file
+Manifests/MDM/Manifests/not_SSL/secret-empty.yml
+Manifests/MDM/Manifests/SSL/file
+Manifests/MDM/Manifests/SSL/secret-empty.yml
+Helm/MDM/_my_values.yaml
+docker_images/
+MDM_old/
+**/*.crt
+**/*.key
+**/*.pem
+**/*.jks
+**/*.jceks
+**/*.keystore
+**/*.truststore
+**/cluster-keys.json
+**/_volume_data/**/custom-libs/*
+**/_volume_data/**/extensions/*
+**/VOLUME_DATA/**/extensions/*
+**/VOLUME_DATA/**/custom-libs/*
+

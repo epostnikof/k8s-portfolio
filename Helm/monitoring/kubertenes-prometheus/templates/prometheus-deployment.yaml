@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-deployment
+  namespace: {{ .Values.Namespace }}
+  labels:
+    app: {{ .Chart.Name }}
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: {{ .Chart.Name }}
+    app.kubernetes.io/part-of: monitoring
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+          ports:
+            - containerPort: {{ .Values.service.containerPort }}
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/
+            - name: nfs-pv-{{ .Chart.Name }}-data
+              mountPath: /prometheus/
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            defaultMode: 420
+            name: "{{ .Chart.Name }}-conf"
+        - name: nfs-pv-{{ .Chart.Name }}-data
+          persistentVolumeClaim:
+            claimName: nfs-pvc-{{ .Chart.Name }}-data
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"

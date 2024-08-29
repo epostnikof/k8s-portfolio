@@ -1,0 +1,26 @@
+### Важно!
+# Ключи прописаны в secrets здесь прописаны только пути к основным конфигурационным файлам.
+
+### Data Storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv-nifireg-data
+spec:
+  capacity:
+    storage: 30Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: nfs
+  mountOptions:
+    - hard
+    - nfsvers=4.0
+    - retrans=10
+    - timeo=60
+  nfs:
+    path: /var/nfs/nifireg/
+    server: 10.21.2.33

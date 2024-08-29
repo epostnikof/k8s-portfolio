@@ -1,0 +1,256 @@
+---
+apiVersion: v1
+data:
+  start.sh: |
+    #!/bin/sh -e
+
+    #    Licensed to the Apache Software Foundation (ASF) under one or more
+    #    contributor license agreements.  See the NOTICE file distributed with
+    #    this work for additional information regarding copyright ownership.
+    #    The ASF licenses this file to You under the Apache License, Version 2.0
+    #    (the "License"); you may not use this file except in compliance with
+    #    the License.  You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #    Unless required by applicable law or agreed to in writing, software
+    #    distributed under the License is distributed on an "AS IS" BASIS,
+    #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #    See the License for the specific language governing permissions and
+    #    limitations under the License.
+
+    scripts_dir='/opt/nifi/scripts'
+    mkdir -p ${NIFI_HOME}/flow/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/pod_conf/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/database_repository/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/flowfile_repository/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/content_repository/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/provenance_repository/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/status_repository/${POD_NAME}
+    mkdir -p ${NIFI_HOME}/import
+
+    [ -f "${scripts_dir}/common.sh" ] && . "${scripts_dir}/common.sh"
+
+    # Override JVM memory settings
+    if [ ! -z "${NIFI_JVM_HEAP_INIT}" ]; then
+        prop_replace 'java.arg.2'       "-Xms${NIFI_JVM_HEAP_INIT}" ${nifi_bootstrap_file}
+    fi
+
+    if [ ! -z "${NIFI_JVM_HEAP_MAX}" ]; then
+        prop_replace 'java.arg.3'       "-Xmx${NIFI_JVM_HEAP_MAX}" ${nifi_bootstrap_file}
+    fi
+
+    if [ ! -z "${NIFI_JVM_DEBUGGER}" ]; then
+        uncomment "java.arg.debug" ${nifi_bootstrap_file}
+    fi
+
+    prop_update(){
+        target_file=${3:-${nifi_props_file}}
+        echo "grep '$1'" ${target_file}
+        if grep -q $1 ${target_file}
+        then
+            echo "replace"
+            prop_replace "$1" "$2"
+        else
+            echo "add"
+            echo "$1=$2" >> ${target_file}
+        fi
+        echo "end"
+    }
+
+    # uncomment secure
+    # target_file=${3:-${nifi_props_file}}
+    # sed -i 's/^# \(nifi.security.identity.mapping.pattern.dn.*\)/\1/' $target_file
+    # sed -i 's/^# \(nifi.security.identity.mapping.value.dn.*\)/\1/' $target_file
+    # sed -i 's/^# \(nifi.security.identity.mapping.transform.dn.*\)/\1/' $target_file
+    # prop_update 'nifi.security.identity.mapping.pattern.dn'      "${NIFI_SECURITY_IDENTITY_MAPPING_PATTERN_DN:-^CN=(.*?), OU=(.*?), O=(.*?), L=(.*?), ST=(.*?), C=(.*?)$}"
+    # prop_update 'nifi.security.identity.mapping.value.dn'      "${NIFI_SECURITY_IDENTITY_MAPPING_VALUE_DN:-$1@$2}"
+    # prop_update 'nifi.security.identity.mapping.transform.dn'      "${NIFI_SECURITY_IDENTITY_MAPPING_TRANSFORM_DN:-NONE}"
+
+
+    # set timezone
+    if [ ! -z "${NIFI_JVM_TIMEZONE}" ]; then
+        prop_update 'java.arg.8'       "-Duser.timezone=${NIFI_JVM_TIMEZONE}" ${nifi_bootstrap_file}
+    fi
+
+
+    ###Flow config###
+    prop_replace 'nifi.flow.configuration.file'              "${NIFI_HOME}/flow/${POD_NAME}/flow.xml.gz"
+    prop_replace 'nifi.flow.configuration.json.file'              "${NIFI_HOME}/flow/${POD_NAME}/flow.json.gz"
+
+    ###Login identity###
+    prop_replace 'nifi.login.identity.provider.configuration.file'     "${NIFI_HOME}/pod_conf/${POD_NAME}/login-identity-providers.xml"
+    # prop_replace 'nifi.authorizer.configuration.file'     "${NIFI_HOME}/pod_conf/${POD_NAME}/authorizers.xml"
+    # prop_replace 'nifi.state.management.configuration.file'     "${NIFI_HOME}/pod_conf/${POD_NAME}/state-management.xml"
+    ### OTHER VOLUME
+
+    prop_replace 'nifi.database.directory'              "${NIFI_HOME}/database_repository/${POD_NAME}"
+    prop_replace 'nifi.flowfile.repository.directory'              "${NIFI_HOME}/flowfile_repository/${POD_NAME}"
+    prop_replace 'nifi.content.repository.directory.default'              "${NIFI_HOME}/content_repository/${POD_NAME}"
+    prop_replace 'nifi.provenance.repository.directory.default'              "${NIFI_HOME}/provenance_repository/${POD_NAME}"
+    prop_replace 'nifi.status.repository.questdb.persist.location'              "${NIFI_HOME}/status_repository/${POD_NAME}"
+
+    # debug ssl
+    prop_update     'java.arg.netdebug'       "-Djavax.net.debug=ssl"
+
+    # network binding
+    prop_replace 'nifi.web.https.network.interface.default'  'eth0'
+    # Secure keycloak
+    prop_replace 'nifi.security.user.login.identity.provider'  ''
+    prop_replace 'nifi.security.user.authorizer'  'managed-authorizer'
+
+    # Establish baseline properties
+    prop_replace 'nifi.web.https.port'              "${NIFI_WEB_HTTPS_PORT:-8443}"
+    prop_replace 'nifi.web.https.host'              "${NIFI_WEB_HTTPS_HOST:-$HOSTNAME}"
+    prop_replace 'nifi.web.proxy.host'              "${NIFI_WEB_PROXY_HOST}"
+    prop_replace 'nifi.remote.input.host'           "${NIFI_REMOTE_INPUT_HOST:-$HOSTNAME}"
+    prop_replace 'nifi.remote.input.socket.port'    "${NIFI_REMOTE_INPUT_SOCKET_PORT:-10000}"
+    prop_replace 'nifi.remote.input.secure'         "${NIFI_REMOTE_INPUT_SECURE:-true}"
+    prop_replace 'nifi.cluster.protocol.is.secure'  'true'
+    prop_replace 'nifi.provenance.repository.indexed.attributes' "${NIFI_PROVENANCE_REPOSITORY_INDEXED_ATTRIBUTES}"
+    prop_replace 'nifi.content.claim.max.appendable.size' "${NIFI_CONTENT_CLAIM_MAX_APPENDABLE_SIZE:-1 MB}"
+    #
+    prop_replace 'nifi.security.keystore'                     "${KEYSTORE_PATH:-/opt/nifi/nifi-current/keytool/keystore.jks}"
+    prop_replace 'nifi.security.keystoreType'                 "${KEYSTORE_TYPE:-jks}"
+    prop_replace 'nifi.security.truststore'                   "${TRUSTSTORE_PATH:-/opt/nifi/nifi-current/keytool/truststore.jks}"
+    prop_replace 'nifi.security.truststoreType'               "${TRUSTSTORE_TYPE:-jks}"
+    # prop_replace 'nifi.security.user.authorizer'              'managed-authorizer'
+    # prop_replace 'nifi.security.user.login.identity.provider' ''
+    prop_replace 'nifi.security.keystorePasswd'     "${KEYSTORE_PASSWORD}"
+    prop_replace 'nifi.security.keyPasswd'          "${KEYSTORE_PASSWORD}"
+    prop_replace 'nifi.security.truststorePasswd'   "${KEYSTORE_PASSWORD}"
+
+    prop_update 'nifi.custom.url.unidata'           "${NIFI_CUSTOM_URL_UNIDATA:-unidata}"
+    prop_update 'nifi.custom.url.modelRegistry'     "${NIFI_CUSTOM_URL_MODELREGISTRY:-mrg}"
+    prop_update 'nifi.custom.url.kibana'            "${NIFI_CUSTOM_URL_KIBANA:-kibana}"
+    prop_update 'nifi.custom.smartetl.version'      "${NIFI_CUSTOM_SMARTETL_VERSION:-0.1}"
+
+
+    # Set nifi-toolkit properties files and baseUrl
+    "${scripts_dir}/toolkit.sh"
+    prop_replace 'baseUrl' "https://${NIFI_WEB_HTTPS_HOST:-$HOSTNAME}:${NIFI_WEB_HTTPS_PORT:-8443}" ${nifi_toolkit_props_file}
+
+
+    if [ -n "${NIFI_WEB_HTTP_PORT}" ]; then
+        # prop_replace 'nifi.web.https.port'                        "${NIFI_WEB_HTTPS_PORT}"
+        # prop_replace 'nifi.web.https.host'                        "${NIFI_WEB_HTTPS_HOST:-$HOSTNAME}"
+        prop_replace 'nifi.web.http.port'                         "${NIFI_WEB_HTTP_PORT}"
+        prop_replace 'nifi.web.http.host'                         "${NIFI_WEB_HTTP_HOST:-$HOSTNAME}"
+        prop_replace 'nifi.remote.input.secure'                   'false'
+        prop_replace 'nifi.cluster.protocol.is.secure'            'false'
+        prop_replace 'nifi.security.user.authorizer'              'managed-authorizer'
+        prop_replace 'nifi.security.user.login.identity.provider' ''
+        prop_replace 'keystore'                                   '' ${nifi_toolkit_props_file}
+        prop_replace 'keystoreType'                               '' ${nifi_toolkit_props_file}
+        prop_replace 'truststore'                                 '' ${nifi_toolkit_props_file}
+        prop_replace 'truststoreType'                             '' ${nifi_toolkit_props_file}
+        prop_replace 'baseUrl' "http://${NIFI_WEB_HTTP_HOST:-$HOSTNAME}:${NIFI_WEB_HTTP_PORT}" ${nifi_toolkit_props_file}
+
+        if [ -n "${NIFI_WEB_PROXY_HOST}" ]; then
+            echo 'NIFI_WEB_PROXY_HOST was set but NiFi is not configured to run in a secure mode. Unsetting nifi.web.proxy.host.'
+            prop_replace 'nifi.web.proxy.host' ''
+        fi
+    else
+        if [ -z "${NIFI_WEB_PROXY_HOST}" ]; then
+            echo 'NIFI_WEB_PROXY_HOST was not set but NiFi is configured to run in a secure mode. The NiFi UI may be inaccessible if using port mapping or connecting through a proxy.'
+        fi
+    fi
+
+    prop_replace 'nifi.variable.registry.properties'    "${NIFI_VARIABLE_REGISTRY_PROPERTIES:-}"
+    prop_replace 'nifi.cluster.is.node'                         "${NIFI_CLUSTER_IS_NODE:-false}"
+    # prop_replace 'nifi.cluster.node.address'                    "${NIFI_CLUSTER_ADDRESS:-$HOSTNAME}"
+    prop_replace 'nifi.cluster.node.address'                    "${NIFI_CLUSTER_NODE_ADDRESS:-$HOSTNAME}"
+    prop_replace 'nifi.cluster.node.protocol.port'              "${NIFI_CLUSTER_NODE_PROTOCOL_PORT:-}"
+    prop_replace 'nifi.cluster.node.protocol.max.threads'       "${NIFI_CLUSTER_NODE_PROTOCOL_MAX_THREADS:-50}"
+    prop_replace 'nifi.zookeeper.connect.string'                "${NIFI_ZK_CONNECT_STRING:-}"
+    prop_replace 'nifi.zookeeper.root.node'                     "${NIFI_ZK_ROOT_NODE:-/nifi}"
+    prop_replace 'nifi.cluster.flow.election.max.wait.time'     "${NIFI_ELECTION_MAX_WAIT:-5 mins}"
+    prop_replace 'nifi.cluster.flow.election.max.candidates'    "${NIFI_ELECTION_MAX_CANDIDATES:-}"
+    prop_replace 'nifi.web.proxy.context.path'                  "${NIFI_WEB_PROXY_CONTEXT_PATH:-}"
+    # Timeout
+    prop_replace 'nifi.cluster.node.connection.timeout'            "${NIFI_CLUSTER_NODE_CONNECTION_TIMEOUT:-30 sec}"
+    prop_replace 'nifi.cluster.node.read.timeout'                  "${NIFI_CLUSTER_NODE_READ_TIMEOUT:-30 sec}"
+    prop_update 'nifi.cluster.protocol.connection.handshake.timeout'  "${NIFI_CLUSTER_PROTOCOL_CONNECTION_HANDSHAKE_TIMEOUT:-3 min}"
+    prop_replace 'nifi.cluster.protocol.heartbeat.interval'         "${NIFI_CLUSTER_PROTOCOL_HEARTBEAT_INTERVAL:-2 min}"
+
+    # Set analytics properties
+    prop_replace 'nifi.analytics.predict.enabled'                   "${NIFI_ANALYTICS_PREDICT_ENABLED:-false}"
+    prop_replace 'nifi.analytics.predict.interval'                  "${NIFI_ANALYTICS_PREDICT_INTERVAL:-3 mins}"
+    prop_replace 'nifi.analytics.query.interval'                    "${NIFI_ANALYTICS_QUERY_INTERVAL:-5 mins}"
+    prop_replace 'nifi.analytics.connection.model.implementation'   "${NIFI_ANALYTICS_MODEL_IMPLEMENTATION:-org.apache.nifi.controller.status.analytics.models.OrdinaryLeastSquares}"
+    prop_replace 'nifi.analytics.connection.model.score.name'       "${NIFI_ANALYTICS_MODEL_SCORE_NAME:-rSquared}"
+    prop_replace 'nifi.analytics.connection.model.score.threshold'  "${NIFI_ANALYTICS_MODEL_SCORE_THRESHOLD:-.90}"
+
+    if [ -n "${NIFI_SENSITIVE_PROPS_KEY}" ]; then
+        prop_replace 'nifi.sensitive.props.key' "${NIFI_SENSITIVE_PROPS_KEY}"
+    fi
+
+    if [ -n "${SINGLE_USER_CREDENTIALS_USERNAME}" ] && [ -n "${SINGLE_USER_CREDENTIALS_PASSWORD}" ]; then
+        ${NIFI_HOME}/bin/nifi.sh set-single-user-credentials "${SINGLE_USER_CREDENTIALS_USERNAME}" "${SINGLE_USER_CREDENTIALS_PASSWORD}"
+    fi
+
+    . "${scripts_dir}/update_cluster_state_management.sh"
+
+    # Check if we are secured or unsecured
+    case ${AUTH} in
+        tls)
+            echo 'Enabling Two-Way SSL user authentication'
+            . "${scripts_dir}/secure.sh"
+            ;;
+        # ldap)
+        #     echo 'Enabling LDAP user authentication'
+        #     # Reference ldap-provider in properties
+        #     prop_replace 'nifi.security.user.login.identity.provider' 'ldap-provider'
+        #
+        #     . "${scripts_dir}/secure.sh"
+        #     . "${scripts_dir}/update_login_providers.sh"
+        #     ;;
+        oidc)
+            echo 'Enabling OIDC user authentication'
+            # Reference 'OpenId Connect SSO Properties' in properties
+            prop_replace 'nifi.security.user.oidc.discovery.url'            "${NIFI_SECURITY_USER_OIDC_DISCOVERY_URL:-}"
+            prop_replace 'nifi.security.user.oidc.connect.timeout'        "${NIFI_SECURITY_USER_OIDC_CONNECT_TIMEOUT:-100 secs}"
+            prop_replace 'nifi.security.user.oidc.read.timeout'           "${NIFI_SECURITY_USER_OIDC_READ_TIMEOUT:-5 secs}"
+            prop_replace 'nifi.security.user.oidc.client.id'              "${NIFI_SECURITY_USER_OIDC_CLIENT_ID:-}"
+            prop_replace 'nifi.security.user.oidc.client.secret'          "${NIFI_SECURITY_USER_OIDC_CLIENT_SECRET:-}"
+            prop_replace 'nifi.security.user.oidc.preferred.jwsalgorithm' "${NIFI_SECURITY_USER_OIDC_PREFERRED_JWSALGORITHM:-RS256}"
+
+            . "${scripts_dir}/secure.sh"
+            ;;
+        saml)
+            echo 'Enabling SAML user authentication'
+            prop_replace 'nifi.security.user.saml.idp.metadata.url'            "${NIFI_SECURITY_USER_SAML_IDP_METADATA_URL:-http://keycloak:8080/auth/realms/master/protocol/saml/descriptor}"
+            prop_replace 'nifi.security.user.saml.group.attribute.name'        "${NIFI_SECURITY_USER_SAML_GROUP_ATTRIBUTE_NAME:-}"
+            prop_update 'nifi.security.user.saml.metadata.signing.enabled'     "${NIFI_SECURITY_USER_SAML_METADATA_SIGNING_ENABLED:-false}"
+            prop_update 'nifi.security.user.saml.message.logging.enabled'      "${NIFI_SECURITY_USER_SAML_MESSAGE_LOGGING_ENABLED:-false}"
+            prop_replace 'nifi.security.user.saml.identity.attribute.name'     "${NIFI_SECURITY_USER_SAML_IDENTITY_ATTRIBUTE_NAME:-}"
+            prop_replace 'nifi.security.user.saml.single.logout.enabled'       "${NIFI_SECURITY_USER_SAML_SINGLE_LOGOUT_ENABLED:-true}"
+            prop_replace 'nifi.security.user.saml.sp.entity.id'                "${NIFI_SECURITY_USER_SAML_SP_ENTITY_ID:-org:apache:nifi:saml:sp}"
+            prop_replace 'nifi.security.user.saml.http.client.truststore.strategy'                "${NIFI_SECURITY_USER_SAML_HTTP_CLIENT_TRUSTSTORE_STRATEGY:-NIFI}"
+            prop_replace 'nifi.security.user.saml.http.client.connect.timeout' "${NIFI_SECURITY_USER_SAML_HTTP_CLIENT_CONNECT_TIMEOUT:-30 secs}"
+            prop_replace 'nifi.security.user.saml.http.client.read.timeout'    "${NIFI_SECURITY_USER_SAML_HTTP_CLIENT_READ_TIMEOUT:-30 secs}"
+            . "/scripts/security.sh"
+            . "${scripts_dir}/update_login_providers.sh"
+            ;;
+        *)
+            if [ ! -z "${NIFI_WEB_PROXY_HOST}" ]; then
+                echo 'NIFI_WEB_PROXY_HOST was set but NiFi is not configured to run in a secure mode.  Will not update nifi.web.proxy.host.'
+            fi
+            ;;
+    esac
+
+
+    # Continuously provide logs so that 'docker logs' can produce them
+    "${NIFI_HOME}/bin/nifi.sh" run &
+    nifi_pid="$!"
+    tail -F --pid=${nifi_pid} "${NIFI_HOME}/logs/nifi-app.log" &
+
+    trap 'echo Received trapped signal, beginning shutdown...;./bin/nifi.sh stop;exit 0;' TERM HUP INT;
+    trap ":" EXIT
+
+    echo NiFi running with PID ${nifi_pid}.
+    wait ${nifi_pid}
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: start.sh

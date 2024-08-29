@@ -1,0 +1,26 @@
+{{- $existingService := lookup "v1" "Service" .Release.Namespace (printf "mdm-ui-service-%s" .Values.backend.color) }}
+{{- if not $existingService }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mdm-ui-service-{{ .Values.backend.color }}
+  labels:
+    app: "{{ .Values.backend.name }}-{{ .Values.backend.color }}"
+  annotations:
+    app.kubernetes.io/name: "{{ .Values.backend.name }}-{{ .Values.backend.color }}"
+    app.kubernetes.io/part-of: "{{ .Values.backend.name }}-{{ .Values.backend.color }}"
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 600
+  selector:
+    app: "{{ .Values.backend.name }}-{{ .Values.backend.color }}"
+    color: "{{ .Values.backend.color }}"
+  ports:
+    - protocol: TCP
+      port: {{ .Values.backend.forward_port }}
+      targetPort: {{ .Values.backend.container_port }}
+{{- end }}

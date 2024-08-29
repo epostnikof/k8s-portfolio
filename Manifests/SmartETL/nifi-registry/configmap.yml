@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nifi-registry-cm
+data:
+  DOMAIN: "cluster-k8s.ov.universe-data.ru"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL: "https://cluster-k8s.ov.universe-data.ru/keycloak/auth/realms/master/.well-known/openid-configuration"
+  K8S_NODES: "k8s-node3.ov.universe-data.ru,k8s-node2.ov.universe-data.ru,k8s-node1.ov.universe-data.ru"
+  JAVA_OPTS: "-XX:UseAVX=0 -Djavax.net.debug=ssl"
+  ##DATABASE##
+  NIFI_REGISTRY_DB_URL: "jdbc:postgresql://10.21.2.33:5432/nifireg"
+  NIFI_REGISTRY_DB_USER: "nifireg"
+  NIFI_REGISTRY_DB_PASS: "nifireg"
+  NIFI_REGISTRY_DB_CLASS: "org.postgresql.Driver"
+  ##
+  NIFI_PROVENANCE_REPOSITORY_INDEXED_ATTRIBUTES: "'runId, batchId, sourceSystem'"
+
+  #NIFI_CUSTOM_URL_UNIDATA:
+  # NIFI_CUSTOM_URL_MODELREGISTRY: "http://cluster-k8s.ov.universe-data.ru:${MODEL_REGISTRY_UI_PORT}"
+  NIFI_CUSTOM_URL_KIBANA: "https://cluster-k8s.ov.universe-data.ru/kibana"
+  NIFI_CUSTOM_SMARTETL_VERSION: "${SMARTETL_VERSION}"
+
+  # Security
+  KEYSTORE_PATH: "/opt/nifi-registry/nifi-registry-current/keytool/all/keystore.jks"
+  KEYSTORE_PASSWORD: "th1s1s3up34e5r37"
+  KEYSTORE_TYPE: "JKS"
+  TRUSTSTORE_PATH: "/opt/nifi-registry/nifi-registry-current/keytool/all/truststore.jks"
+  TRUSTSTORE_PASSWORD: "th1s1s3up34e5r37"
+  TRUSTSTORE_TYPE: "JKS"
+  NIFI_SECURITY_USER_AUTHORIZER: "managed-authorizer"
+  NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER: ""
+
+  NIFI_REGISTRY_SECURITY_USER_OIDC_CONNECT_TIMEOUT: "10 min"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_READ_TIMEOUT: "60 secs"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_CLIENT_ID: "org:apache:nifi-reg:oidc:all"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_CLIENT_SECRET: "9fGOnxhGox70mGRWXtux0VEbfHraqtAQ"
+  AUTH: "oidc"
+  INITIAL_ADMIN_IDENTITY: "admin"

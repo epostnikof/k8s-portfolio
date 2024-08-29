@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Chart.Name }}-cm"
+data:
+  DOMAIN: "{{ .Values.ingress.domain }}"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL: "https://{{ .Values.ingress.domain }}/{{ .Values.config.nifi_registry_security_user_oidc_discovery_url_path }}"
+  JAVA_OPTS: "-XX:UseAVX=0 -Djavax.net.debug=ssl"
+  ## DATABASE ##
+  NIFI_REGISTRY_DB_URL: "jdbc:postgresql://{{ .Values.config.postgresql_ip }}:{{ .Values.config.postgresql_port }}/nifireg"
+  NIFI_REGISTRY_DB_USER: "nifireg"
+  NIFI_REGISTRY_DB_PASS: "{{ .Values.config.postgresql_pass }}"
+  NIFI_REGISTRY_DB_CLASS: "org.postgresql.Driver"
+  ##
+  NIFI_PROVENANCE_REPOSITORY_INDEXED_ATTRIBUTES: "{{ .Values.config.nifi_provenance_repository_indexed_attributes }}"
+
+  # Security
+  KEYSTORE_PATH: "/opt/nifi-registry/nifi-registry-current/keytool/all/keystore.jks"
+  KEYSTORE_PASSWORD: "{{ .Values.config.keystore_password }}"
+  KEYSTORE_TYPE: "JKS"
+  TRUSTSTORE_PATH: "/opt/nifi-registry/nifi-registry-current/keytool/all/truststore.jks"
+  TRUSTSTORE_PASSWORD: "{{ .Values.config.truststore_password }}"
+  TRUSTSTORE_TYPE: "JKS"
+  NIFI_SECURITY_USER_AUTHORIZER: "{{ .Values.config.nifi_security_user_authorizer }}"
+  NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER: ""
+
+  NIFI_REGISTRY_SECURITY_USER_OIDC_CONNECT_TIMEOUT: "{{ .Values.config.nifi_registry_security_user_oidc_connect_timeout }}"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_READ_TIMEOUT: "{{ .Values.config.nifi_registry_security_user_oidc_read_timeout }}"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_CLIENT_ID: "{{ .Values.config.nifi_registry_security_user_oidc_client_id }}"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_CLIENT_SECRET: "{{ .Values.config.keystore_password }}"
+  AUTH: "{{ .Values.config.auth }}"
+  INITIAL_ADMIN_IDENTITY: "{{ .Values.config.initial_admin_identity }}"

@@ -1,0 +1,114 @@
+---
+apiVersion: v1
+data:
+  start-nr.sh: |
+    #!/bin/sh -e
+    # sleep 9999
+    #    Licensed to the Apache Software Foundation (ASF) under one or more
+    #    contributor license agreements.  See the NOTICE file distributed with
+    #    this work for additional information regarding copyright ownership.
+    #    The ASF licenses this file to You under the Apache License, Version 2.0
+    #    (the "License"); you may not use this file except in compliance with
+    #    the License.  You may obtain a copy of the License at
+    #
+    #       http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #    Unless required by applicable law or agreed to in writing, software
+    #    distributed under the License is distributed on an "AS IS" BASIS,
+    #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    #    See the License for the specific language governing permissions and
+    #    limitations under the License.
+    # /scripts/secure.sh
+    VOLUME_CONF_DIR="${NIFI_REGISTRY_HOME}/volume_conf"
+    mkdir -p ${VOLUME_CONF_DIR}
+    scripts_dir='/opt/nifi-registry/scripts'
+
+        prop_update(){
+        target_file=${3:-${nifi_registry_props_file}}
+        echo "grep '$1'" ${target_file}
+        if grep -q $1 ${target_file}
+        then
+            echo "replace"
+            prop_replace "$1" "$2"
+        else
+            echo "add"
+            echo >> ${target_file}
+            echo "$1=$2" >> ${target_file}
+        fi
+        echo "end"
+    }
+
+
+    [ -f "${scripts_dir}/common.sh" ] && . "${scripts_dir}/common.sh"
+
+    # Establish baseline properties
+    prop_replace 'nifi.registry.web.http.port'      "${NIFI_REGISTRY_WEB_HTTP_PORT:-18080}"
+    prop_replace 'nifi.registry.web.http.host'      "${NIFI_REGISTRY_WEB_HTTP_HOST:-$HOSTNAME}"
+    #SECURITY
+    prop_replace 'nifi.registry.security.keystore'      "${KEYSTORE_PATH}"
+    prop_replace 'nifi.registry.security.keystoreType'      "${KEYSTORE_TYPE}"
+    prop_replace 'nifi.registry.security.keystorePasswd'      "${KEYSTORE_PASSWORD}"
+    prop_replace 'nifi.registry.security.keyPasswd'      "${KEYSTORE_PASSWORD}"
+    prop_replace 'nifi.registry.security.truststore'      "${TRUSTSTORE_PATH}"
+    prop_replace 'nifi.registry.security.truststoreType'      "${TRUSTSTORE_TYPE}"
+
+    #DATABASE
+    prop_replace 'nifi.registry.db.url'     "${NIFI_REGISTRY_DB_URL}"
+    prop_replace 'nifi.registry.db.driver.class' "${NIFI_REGISTRY_DB_CLASS}"
+    prop_replace 'nifi.registry.db.username' "${NIFI_REGISTRY_DB_USER}"
+    prop_replace 'nifi.registry.db.password' "${NIFI_REGISTRY_DB_PASS}"
+
+    #CONF
+    prop_replace 'nifi.registry.security.authorizers.configuration.file' "${VOLUME_CONF_DIR}/authorizers.xml"
+    prop_replace 'nifi.registry.security.identity.providers.configuration.file' "${VOLUME_CONF_DIR}/identity-providers.xml"
+    prop_replace 'nifi.registry.providers.configuration.file' "${VOLUME_CONF_DIR}/providers.xml"
+    prop_replace 'nifi.registry.registry.alias.configuration.file' "${VOLUME_CONF_DIR}/registry-aliases.xml"
+
+    . ${scripts_dir}/update_database.sh
+
+    # Check if we are secured or unsecured
+    case ${AUTH} in
+        tls)
+            echo 'Enabling Two-Way SSL user authentication'
+            . "${scripts_dir}/secure.sh"
+            ;;
+        ldap)
+            echo 'Enabling LDAP user authentication'
+            # Reference ldap-provider in properties
+            prop_replace 'nifi.registry.security.identity.provider' 'ldap-identity-provider'
+            prop_replace 'nifi.registry.security.needClientAuth' 'false'
+
+            . "${scripts_dir}/secure.sh"
+            . "${scripts_dir}/update_login_providers.sh"
+            ;;
+        oidc)
+            echo 'Enabling OIDC user authentication'
+            prop_replace 'nifi.registry.security.needClientAuth' 'false'
+            prop_replace 'nifi.registry.security.user.oidc.discovery.url' "${NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL}"
+            prop_replace 'nifi.registry.security.user.oidc.connect.timeout' "${NIFI_REGISTRY_SECURITY_USER_OIDC_CONNECT_TIMEOUT}"
+            prop_replace 'nifi.registry.security.user.oidc.read.timeout' "${NIFI_REGISTRY_SECURITY_USER_OIDC_READ_TIMEOUT}"
+            prop_replace 'nifi.registry.security.user.oidc.client.id' "${NIFI_REGISTRY_SECURITY_USER_OIDC_CLIENT_ID}"
+            prop_replace 'nifi.registry.security.user.oidc.client.secret' "${NIFI_REGISTRY_SECURITY_USER_OIDC_CLIENT_SECRET}"
+            prop_replace 'nifi.registry.web.https.host'     "${NIFI_REGISTRY_WEB_HTTPS_HOST}"
+
+            . "${scripts_dir}/secure.sh"
+            . "${scripts_dir}/update_oidc_properties.sh"
+            ;;
+    esac
+
+    . "${scripts_dir}/update_flow_provider.sh"
+    . "${scripts_dir}/update_bundle_provider.sh"
+
+    # Continuously provide logs so that 'docker logs' can produce them
+    tail -F "${NIFI_REGISTRY_HOME}/logs/nifi-registry-app.log" &
+    "${NIFI_REGISTRY_HOME}/bin/nifi-registry.sh" run &
+    nifi_registry_pid="$!"
+
+    trap "echo Received trapped signal, beginning shutdown...;" KILL TERM HUP INT EXIT;
+
+    echo NiFi-Registry running with PID ${nifi_registry_pid}.
+    wait ${nifi_registry_pid}
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: start-nr.sh

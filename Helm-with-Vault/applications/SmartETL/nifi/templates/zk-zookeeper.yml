@@ -1,0 +1,122 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+  labels:
+    name: zookeeper
+    app: zookeeper
+  annotations:
+    app.kubernetes.io/name: zookeeper
+    app.kubernetes.io/part-of: nifi
+spec:
+  replicas: {{ .Values.zookeeper.replicaCount }}
+  revisionHistoryLimit: 1
+  serviceName: zookeeper
+  podManagementPolicy: {{ .Values.zookeeper.podManagementPolicy }}
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      setHostnameAsFQDN: true
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-regcred"
+      containers:
+        - name: zookeeper
+          image: "{{ .Values.zookeeper.image.repository }}:{{ .Values.zookeeper.image.tag }}"
+          imagePullPolicy: "{{ .Values.zookeeper.pullPolicy }}"
+          ports:
+            - containerPort: {{ .Values.zookeeper.service.zk_port }}
+              name: zk
+            - containerPort: {{ .Values.zookeeper.service.http_port }}
+              name: http
+            - containerPort: {{ .Values.zookeeper.service.metrics_port }}
+              name: metrics
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace # Use pod namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: ZOO_SERVERS
+              value: {{ .Values.zookeeper.zoo_servers }}
+            - name: POD_INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          envFrom:
+            - configMapRef:
+                name: zookeeper-cm
+                optional: false
+          livenessProbe:
+            exec:
+              command:
+                - which
+                - java
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: zk
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          resources:
+            requests:
+              cpu: {{ .Values.zookeeper.resources.requests.cpu }}
+              memory: {{ .Values.zookeeper.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.zookeeper.resources.limits.cpu }}
+              memory: {{ .Values.zookeeper.resources.limits.memory }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - mountPath: /data
+              name: data
+              subPath: data
+            - mountPath: /datalog
+              name: data
+              subPath: datalog
+            - mountPath: /conf
+              name: data
+              subPath: conf
+            - name: start-script
+              mountPath: /apache-zookeeper-{{ .Values.zookeeper.version }}-bin/bin/zkServer.sh
+              subPath: zkServer.sh
+              readOnly: false
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: start-script
+          configMap:
+            name: zkserver.sh
+            optional: false
+            defaultMode: 0755

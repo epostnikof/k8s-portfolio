@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-path: "/"
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.ingress.domain }}
+      secretName: "{{ .Chart.Name }}-cluster-secret"
+  rules:
+    - host: {{ .Values.ingress.domain }}
+      http:
+        paths:
+          - path: /nifi-registry
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Chart.Name }}
+                port:
+                  number: {{ .Values.service.https_port }}
+  ingressClassName: nginx
