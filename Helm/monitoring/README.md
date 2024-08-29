@@ -15,15 +15,15 @@
 - установленный плагин coreDNS
 - установленный и настроенный плагин `Ingress` (**SSL**)
 - (**SSL**) ноды кластера должны иметь внешнее доменное имя (CNAME на каждую ноду кластера), например:
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
-  - `grafana.cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `grafana.cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `grafana.cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
-  - `prometheus.cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `prometheus.cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `prometheus.cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
+  - `your_domain` `10.21.2.34` - CNAME type
+  - `your_domain` `10.21.2.35` - CNAME type
+  - `your_domain` `10.21.2.36` - CNAME type
+  - `grafana.your_domain` `10.21.2.34` - CNAME type
+  - `grafana.your_domain` `10.21.2.35` - CNAME type
+  - `grafana.your_domain` `10.21.2.36` - CNAME type
+  - `prometheus.your_domain` `10.21.2.34` - CNAME type
+  - `prometheus.your_domain` `10.21.2.35` - CNAME type
+  - `prometheus.your_domain` `10.21.2.36` - CNAME type
     где `10.21.2.34`, `10.21.2.35` и `10.21.2.36` - IP адреса нод кластера Kubernetes
 
 ### Рекомендации
@@ -134,8 +134,8 @@ systemctl restart nfs-server
 Предположительно сервисы мониторинга будут отзываться по отдельным доменным именам.
 Например:
 
-- `grafana.cluster-k8s.ov.universe-data.ru`
-- `prometheus.cluster-k8s.ov.universe-data.ru`
+- `grafana.your_domain`
+- `prometheus.your_domain`
 
 ### Кейс 1: Сертификат выдан центром сертификации
 
@@ -256,7 +256,7 @@ Helm чарт компонента `prometheus` располагается в к
 dockerconfigjson: eyJhdXRocyI6IHsiZG9ja2VyLnRlc3QucnUiOiB7InVzZXJuYW1lIjogImRvY2tlciIsICJwYXNzd29yZCI6ICJoVWlvNzY1NUdiZXRAT09wMDJtPT0ifX19
 ```
 
-- `domain: prometheus.cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: prometheus.your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 
@@ -301,7 +301,7 @@ kubectl get all -n monitoring
 
 ### Доступность сервиса
 
-Если всё сделано правильно, то сервис будет доступен по адресу: `https://prometheus.cluster-k8s.ov.universe-data.ru`
+Если всё сделано правильно, то сервис будет доступен по адресу: `https://prometheus.your_domain`
 
 # Установка kube-state-metrics (опционально)
 
@@ -444,7 +444,7 @@ kubectl get all -n monitoring
 
 Для того, чтобы NiFi начал отдавать метрики нужно включить их в UI NiFi:
 
-Переходим в UI, по адресу который может выглядеть так: `https://cluster-k8s.ov.universe-data.ru/nifi/`
+Переходим в UI, по адресу который может выглядеть так: `https://your_domain/nifi/`
 
 - `**burger menu**`-> `Controller Settings` -> `Report Task`
 - В правом верхнем углу нажимаем `+`
@@ -505,7 +505,7 @@ Helm чарт компонента `grafana` располагается в ка�
 dockerconfigjson: eyJhdXRocyI6IHsiZG9ja2VyLnRlc3QucnUiOiB7InVzZXJuYW1lIjogImRvY2tlciIsICJwYXNzd29yZCI6ICJoVWlvNzY1NUdiZXRAT09wMDJtPT0ifX19
 ```
 
-- `domain: grafana.cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: grafana.your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 
@@ -548,7 +548,7 @@ kubectl get all -n monitoring
 
 ## После установки
 
-Grafana будет доступна по адресу: `https://grafana.cluster-k8s.ov.universe-data.ru/`
+Grafana будет доступна по адресу: `https://grafana.your_domain/`
 
 Первичный логин и пароль: `admin` `admin`
 

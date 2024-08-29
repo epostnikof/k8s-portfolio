@@ -32,9 +32,9 @@ source:
   - `k8s-node1.ov.universe-data.ru` `10.21.2.34` -A type
   - `k8s-node2.ov.universe-data.ru` `10.21.2.35` - A type
   - `k8s-node3.ov.universe-data.ru` `10.21.2.36` - A type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
+  - `your_domain` `10.21.2.34` - CNAME type
+  - `your_domain` `10.21.2.35` - CNAME type
+  - `your_domain` `10.21.2.36` - CNAME type
     где `10.21.2.34`, `10.21.2.35` и `10.21.2.36` - IP адреса нод кластера Kubernetes
 - На каждой ноде кластера должен быть установлен пакет `nfs-common` для корректного взаимодействия с nfs-сервером
 
@@ -268,7 +268,7 @@ Helm чарт для Keycloak находится в каталоге `keycloak`
 dockerconfigjson: eyJhdXRocyI6IHsiZG9ja2VyLnRlc3QucnUiOiB7InVzZXJuYW1lIjogImRvY2tlciIsICJwYXNzd29yZCI6ICJoVWlvNzY1NUdiZXRAT09wMDJtPT0ifX19
 ```
 
-- `domain: cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 
@@ -498,13 +498,13 @@ hpa:
 
 ```yaml
 ingress:
-  domain: cluster-k8s.ov.universe-data.ru
+  domain: your_domain
   # base64 secret
   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0F...
   key: LS0tLS1CRUdJTiBQUkl...
 ```
 
-- `domain: cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 
@@ -809,13 +809,13 @@ image:
 
 ```yaml
 ingress:
-  domain: cluster-k8s.ov.universe-data.ru
+  domain: your_domain
   # base64 secret
   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0F...
   key: LS0tLS1CRUdJTiBQUkl...
 ```
 
-- `domain: cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 

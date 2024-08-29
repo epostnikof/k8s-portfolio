@@ -42,9 +42,9 @@ tags:
 - установленный плагин coreDNS
 - установленный и настроенный плагин `Ingress` (**SSL**)
 - (**SSL**) ноды кластера должны иметь внешнее доменное имя (CNAME на каждую ноду кластера), например: 
-	- `cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-	- `cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-	- `cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
+	- `your_domain` `10.21.2.34` - CNAME type
+	- `your_domain` `10.21.2.35` - CNAME type
+	- `your_domain` `10.21.2.36` - CNAME type
 		где `10.21.2.34`, `10.21.2.35` и `10.21.2.36` - IP адреса нод кластера Kubernetes
 
 ### Рекомендации
@@ -365,7 +365,7 @@ helm get all -n universe-mdm universe-mdm-backend
 
 #### Переменные для HTTPS (SSL):
 
-- `domain: cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 -  `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 

@@ -172,7 +172,7 @@ spec:
             defaultMode: 0755
         - name: cert-and-key
           secret:
-            secretName: cluster-k8s-ov-universe-data-ru-tls
+            secretName: your_domain-tls
             items:
               - key: tls.crt
                 path: keycloak.crt

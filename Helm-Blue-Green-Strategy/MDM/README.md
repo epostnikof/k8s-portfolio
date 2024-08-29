@@ -56,15 +56,15 @@ Blue/Green Deployment (развертывание "синий/зеленый") �
 - установленный плагин coreDNS
 - установленный и настроенный плагин `Ingress` (**SSL**)
 - (**SSL**) ноды кластера должны иметь внешнее доменное имя (CNAME на каждую ноду кластера), например:
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
-  - `blue-green.cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `blue-green.cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `blue-green.cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
+  - `your_domain` `10.21.2.34` - CNAME type
+  - `your_domain` `10.21.2.35` - CNAME type
+  - `your_domain` `10.21.2.36` - CNAME type
+  - `blue-green.your_domain` `10.21.2.34` - CNAME type
+  - `blue-green.your_domain` `10.21.2.35` - CNAME type
+  - `blue-green.your_domain` `10.21.2.36` - CNAME type
     где `10.21.2.34`, `10.21.2.35` и `10.21.2.36` - IP адреса нод кластера Kubernetes
 
-> Доменное имя `blue-green.cluster-k8s.ov.universe-data.ru` необходимо для реализации blue/green стратегии обновления Frontend
+> Доменное имя `blue-green.your_domain` необходимо для реализации blue/green стратегии обновления Frontend
 
 ### Рекомендации
 
@@ -316,11 +316,11 @@ dockerconfigjson: eyJhdXRocyI6IHsiZG9ja2VyLnRlc3QucnUiOiB7InVzZXJuYW1lIjogImRvY2
 
 #### Переменные для HTTPS (SSL)
 
-- `domain: cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 
-И тоже самое для закомментированного блока Ingress, только для тестового доменного имени. (Указано в требованиях `blue-green.cluster-k8s.ov.universe-data.ru`)
+И тоже самое для закомментированного блока Ingress, только для тестового доменного имени. (Указано в требованиях `blue-green.your_domain`)
 
 ### Установка
 
@@ -492,11 +492,11 @@ dockerconfigjson: eyJhdXRocyI6IHsiZG9ja2VyLnRlc3QucnUiOiB7InVzZXJuYW1lIjogImRvY2
 
 #### Переменные для HTTPS (SSL)
 
-- `domain: cluster-k8s.ov.universe-data.ru` - заполните ваше действительное доменное имя;
+- `domain: your_domain` - заполните ваше действительное доменное имя;
 - `crt:` - заполните значение `base64` `tls.crt` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 - `key:` - заполните значение `base64` `tls.key` которое получили в разделе [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl)
 
-И тоже самое для закомментированного блока Ingress, только для тестового доменного имени. (Указано в требованиях `blue-green.cluster-k8s.ov.universe-data.ru`)
+И тоже самое для закомментированного блока Ingress, только для тестового доменного имени. (Указано в требованиях `blue-green.your_domain`)
 
 #### Комментируем переменные для основного домена и настраваем frontend на тестовый домен
 
@@ -506,14 +506,14 @@ dockerconfigjson: eyJhdXRocyI6IHsiZG9ja2VyLnRlc3QucnUiOiB7InVzZXJuYW1lIjogImRvY2
 # Production domain
 #
 # ingress:
-#   domain: cluster-k8s.ov.universe-data.ru
+#   domain: your_domain
 #   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUY1RENDQTh5Z0F3SUJBZ0lVQ...
 #   key:S0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRZ0lCQURBTkJna3Foa2lHOXc...
 #
 # Test domain
 #
 ingress:
-  domain: blue-green.cluster-k8s.ov.universe-data.ru
+  domain: blue-green.your_domain
   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUdFRENDQS9pZ0F3SUJBZ...
   key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRd0lCQURBTkJna3Foa2...
 
@@ -578,7 +578,7 @@ helm get all -n universe-mdm universe-mdm-frontend
 #### Доступность MDM
 
 В данном случае мы развернули blue frontend на тестовом домене, который смотрит на blue backend.
-Для `HTTPS`: `<https://blue-green.cluster-k8s.ov.universe-data.ru>
+Для `HTTPS`: `<https://blue-green.your_domain>
 
 Зайдём в UI и убедимся, в сведениях о системе, что установлены правильные образы.
 
@@ -604,14 +604,14 @@ helm get all -n universe-mdm universe-mdm-frontend
 # Production domain
 #
 # ingress:
-#   domain: cluster-k8s.ov.universe-data.ru
+#   domain: your_domain
 #   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS...
 #   key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRZ0...
 #
 # Test domain
 #
 ingress:
-  domain: blue-green.cluster-k8s.ov.universe-data.ru
+  domain: blue-green.your_domain
   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUdFREND...
   key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUp...
 ```
@@ -626,14 +626,14 @@ ingress:
 # Production domain
 #
 ingress:
-  domain: cluster-k8s.ov.universe-data.ru
+  domain: your_domain
   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUY...
   key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpR...
 #
 # Test domain
 #
 # ingress:
-#   domain: blue-green.cluster-k8s.ov.universe-data.ru
+#   domain: blue-green.your_domain
 #   crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUdFRENDQS9p...
 #   key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUpRd0lCQ...
 ```

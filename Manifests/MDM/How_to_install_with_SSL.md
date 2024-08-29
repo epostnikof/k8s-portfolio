@@ -17,9 +17,9 @@
 - установленный плагин coreDNS
 - установленный и настроенный плагин Ingress (SSL вариант установки)
 - ноды кластера должны иметь внешнее доменное имя (CNAME на каждую ноду кластера), например:
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
+  - `your_domain` `10.21.2.34` - CNAME type
+  - `your_domain` `10.21.2.35` - CNAME type
+  - `your_domain` `10.21.2.36` - CNAME type
     где `10.21.2.34`, `10.21.2.35` и `10.21.2.36` - IP адреса нод кластера Kubernetes
 
 ### Рекомендации
@@ -157,24 +157,24 @@ data:
 
 Откройде для редактирования файл: `Manifests/MDM/Manifests/SSL/ingress.yml`
 
-И замените все вхождения доменных имён `cluster-k8s.ov.universe-data.ru` на свои в следующих секциях:
+И замените все вхождения доменных имён `your_domain` на свои в следующих секциях:
 
 ```yaml
 tls:
   - hosts:
-      - cluster-k8s.ov.universe-data.ru
+      - your_domain
 ```
 
 и
 
 ```yaml
 rules:
-  - host: cluster-k8s.ov.universe-data.ru
+  - host: your_domain
 ```
 
 > ### Важно
 >
-> `secretName: cluster-k8s-ov-universe-data-ru-tls` НЕ является доменным именем. Это имя секрета, к которому будет обращаться Ingress в поисках SSL сертификата. Его менять не нужно.
+> `secretName: your_domain-tls` НЕ является доменным именем. Это имя секрета, к которому будет обращаться Ingress в поисках SSL сертификата. Его менять не нужно.
 
 # Действия после создания ключей
 

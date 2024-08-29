@@ -8,8 +8,8 @@
 Предположительно сервисы мониторинга будут отзываться по отдельным доменным именам.
 Например:
 
-- `grafana.cluster-k8s.ov.universe-data.ru`
-- `prometheus.cluster-k8s.ov.universe-data.ru`
+- `grafana.your_domain`
+- `prometheus.your_domain`
 
 ### Кейс 1: Сертификат выдан центром сертификации
 
@@ -122,7 +122,7 @@ spec:
 Укажите ваше действительное доменное имя, вместо того, что присутствует в манифесте:
 
 ```yaml
-- host: prometheus.cluster-k8s.ov.universe-data.ru
+- host: prometheus.your_domain
 ```
 
 и здесь
@@ -130,7 +130,7 @@ spec:
 ```yaml
 tls:
   - hosts:
-      - prometheus.cluster-k8s.ov.universe-data.ru
+      - prometheus.your_domain
 ```
 
 Укажите `tls.crt` и `tls.key` вместо существующих для домена в формате base64, который мы сгенерировали на шаге [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl):
@@ -166,7 +166,7 @@ kubectl get deployments --namespace=monitoring
 
 ### Доступность сервиса
 
-Если всё сделано правильно, то сервис будет доступен по доменному имени: `https://prometheus.cluster-k8s.ov.universe-data.ru/`
+Если всё сделано правильно, то сервис будет доступен по доменному имени: `https://prometheus.your_domain/`
 
 # Установка kube-state-metrics (опционально)
 
@@ -237,7 +237,7 @@ kubectl apply -f ./kubernetes-node-exporter
 
 Для того, чтобы NiFi начал отдавать метрики нужно включить их в UI NiFi:
 
-Переходим в UI, по адресу который может выглядеть так: `https://cluster-k8s.ov.universe-data.ru/nifi/`
+Переходим в UI, по адресу который может выглядеть так: `https://your_domain/nifi/`
 
 - `**burger menu**`-> `Controller Settings` -> `Report Task`
 - В правом верхнем углу нажимаем `+`
@@ -319,7 +319,7 @@ spec:
 Укажите ваше действительное доменное имя, вместо того, что присутствует в манифесте:
 
 ```yaml
-- host: grafana.cluster-k8s.ov.universe-data.ru
+- host: grafana.your_domain
 ```
 
 и здесь
@@ -327,7 +327,7 @@ spec:
 ```yaml
 tls:
   - hosts:
-      - grafana.cluster-k8s.ov.universe-data.ru
+      - grafana.your_domain
 ```
 
 Укажите `tls.crt` и `tls.key` вместо существующих для домена в формате base64, который мы сгенерировали на шаге [Создание ключей SSL для доменных имён (SSL)](#создание-ключей-ssl-для-доменных-имён-ssl):
@@ -359,7 +359,7 @@ kubectl get deployments --namespace=monitoring
 
 ## После установки
 
-Grafana будет доступна по адресу: `https://grafana.cluster-k8s.ov.universe-data.ru/`
+Grafana будет доступна по адресу: `https://grafana.your_domain/`
 
 Первичный логин и пароль: `admin` `admin`
 

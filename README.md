@@ -20,35 +20,35 @@
 
 ### **NiFi:**
 
-<https://cluster-k8s.ov.universe-data.ru/nifi/>
+<https://your_domain/nifi/>
 Login: `admin`
 Password: `admin`
 
 ### **NiFi-Registry:**
 
-<https://cluster-k8s.ov.universe-data.ru/nifi-registry/>
+<https://your_domain/nifi-registry/>
 Login: `admin`
 Password: `admin`
 
 ### **Keycloak:**
 
-<https://cluster-k8s.ov.universe-data.ru/keycloak/auth/>
+<https://your_domain/keycloak/auth/>
 Login: `admin`
 Password: `admin`
 
 ### **MDM:**
 
-<https://cluster-k8s.ov.universe-data.ru/>
+<https://your_domain/>
 Login: `admin`
 Password: `admin`
 
 ### **Prometheus:**
 
-<https://prometheus.cluster-k8s.ov.universe-data.ru/>
+<https://prometheus.your_domain/>
 
 ### **Grafana:**
 
-<https://grafana.cluster-k8s.ov.universe-data.ru/>
+<https://grafana.your_domain/>
 Login: `admin`
 Password: `qy3YpQU28KKias`
 
@@ -222,7 +222,7 @@ image:
 
 ```
 image:
-  repository: docker.universe-data.ru/smart-etl/apache/nifi-registry-cluster-k8s.ov.universe-data.ru-key
+  repository: docker.universe-data.ru/smart-etl/apache/nifi-registry-your_domain-key
   tag: "1.24.0"
 ```
 

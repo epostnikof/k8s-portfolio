@@ -11,7 +11,7 @@ metadata:
 spec:
   rules:
     # Use the host you used in your kubernetes Ingress Configurations
-    - host: prometheus.cluster-k8s.ov.universe-data.ru
+    - host: prometheus.your_domain
       http:
         paths:
           - backend:
@@ -23,7 +23,7 @@ spec:
             pathType: Prefix
   tls:
     - hosts:
-        - prometheus.cluster-k8s.ov.universe-data.ru
+        - prometheus.your_domain
       secretName: prometheus-secret
 ---
 apiVersion: v1

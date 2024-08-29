@@ -25,9 +25,9 @@
   - `k8s-node1.ov.universe-data.ru` `10.21.2.34` -A type
   - `k8s-node2.ov.universe-data.ru` `10.21.2.35` - A type
   - `k8s-node3.ov.universe-data.ru` `10.21.2.36` - A type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.34` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.35` - CNAME type
-  - `cluster-k8s.ov.universe-data.ru` `10.21.2.36` - CNAME type
+  - `your_domain` `10.21.2.34` - CNAME type
+  - `your_domain` `10.21.2.35` - CNAME type
+  - `your_domain` `10.21.2.36` - CNAME type
     где `10.21.2.34`, `10.21.2.35` и `10.21.2.36` - IP адреса нод кластера Kubernetes
 - На каждой ноде кластера должен быть установлен пакет `nfs-common` для корректного взаимодействия с nfs-сервером
 
@@ -561,7 +561,7 @@ nfs-pvc-nifi-data   Bound    nfs-pv-nifi-data   3Gi        RWO,ROX        nfs   
 ## Настраиваем Ingress
 
 Для настройки Ingress `/k8s-nifi-cluster/deployment/nifi/ingress.yaml`
-И меняем все вхождения доменных имён, например `cluster-k8s.ov.universe-data.ru` (их всего 2)
+И меняем все вхождения доменных имён, например `your_domain` (их всего 2)
 на своё доменное имя, которые соответствуют сертификату, который мы создавали вначале **Это важно** (**Не трогать значение поля secret Name** )
 
 ## Правим ConfigMap
@@ -761,7 +761,7 @@ nfs-pvc-nifireg-data   Bound    nfs-pv-nifireg-data   30Gi       ROX,RWX        
 ## Настраиваем Ingress
 
 Для настройки Ingress `k8s-smartetl/Manifests/nifi-registry/secrets.yml`
-И меняем все вхождения доменных имён, например `cluster-k8s.ov.universe-data.ru` (их всего 2)
+И меняем все вхождения доменных имён, например `your_domain` (их всего 2)
 на своё доменное имя, которые соответствуют сертификату, который мы создавали вначале **Это важно** (**Не трогать значение поля secret Name** )
 
 ### Правим ConfigMap
@@ -770,8 +770,8 @@ nfs-pvc-nifireg-data   Bound    nfs-pv-nifireg-data   30Gi       ROX,RWX        
 
 Расположение файла: `/k8s-nifi-cluster/deployment/nifi/configmap.yml`
 
--  `NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL: "https://cluster-k8s.ov.universe-data.ru/keycloak/auth/realms/master/.well-known/openid-configuration"` - обратить внимание на realms `master` возможно у вас будет другой.
-- `DOMAIN: "cluster-k8s.ov.universe-data.ru"`
+-  `NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL: "https://your_domain/keycloak/auth/realms/master/.well-known/openid-configuration"` - обратить внимание на realms `master` возможно у вас будет другой.
+- `DOMAIN: "your_domain"`
 - `K8S_NODES` - перечислить доменные имена нод кластера через запятую
 
 Указать учётные данные вашей базы данных PostgreSQL:

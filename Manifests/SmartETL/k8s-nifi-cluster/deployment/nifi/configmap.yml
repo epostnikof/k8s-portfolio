@@ -4,8 +4,8 @@ kind: ConfigMap
 metadata:
   name: nifi-cm
 data:
-  DOMAIN: "cluster-k8s.ov.universe-data.ru"
-  NIFI_SECURITY_USER_SAML_IDP_METADATA_URL: "https://cluster-k8s.ov.universe-data.ru/keycloak/auth/realms/master/protocol/saml/descriptor"
+  DOMAIN: "your_domain"
+  NIFI_SECURITY_USER_SAML_IDP_METADATA_URL: "https://your_domain/keycloak/auth/realms/master/protocol/saml/descriptor"
   K8S_NODES: "k8s-node3.ov.universe-data.ru,k8s-node2.ov.universe-data.ru,k8s-node1.ov.universe-data.ru"
   NIFI_JVM_TIMEZONE: "Europe/Moscow"
   KEYSTORE_PATH: /opt/nifi/nifi-current/keytool/all/keystore.jks
@@ -56,6 +56,6 @@ data:
   NIFI_SENSITIVE_PROPS_KEY_PROTECTED: "th1s1s3up34e5r37"
   NIFI_SENSITIVE_PROPS_KEY: "th1s1s3up34e5r37"
   NIFI_WEB_HTTPS_PORT: "8443"
-  NIFI_WEB_PROXY_HOST: "cluster-k8s.ov.universe-data.ru"
+  NIFI_WEB_PROXY_HOST: "your_domain"
   NIFI_ZK_CONNECT_STRING: "zookeeper:2181"
   NIFI_ZOOKEEPER_CONNECT_STRING: "zookeeper:2181"

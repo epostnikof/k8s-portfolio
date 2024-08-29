@@ -4,8 +4,8 @@ kind: ConfigMap
 metadata:
   name: nifi-registry-cm
 data:
-  DOMAIN: "cluster-k8s.ov.universe-data.ru"
-  NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL: "https://cluster-k8s.ov.universe-data.ru/keycloak/auth/realms/master/.well-known/openid-configuration"
+  DOMAIN: "your_domain"
+  NIFI_REGISTRY_SECURITY_USER_OIDC_DISCOVERY_URL: "https://your_domain/keycloak/auth/realms/master/.well-known/openid-configuration"
   K8S_NODES: "k8s-node3.ov.universe-data.ru,k8s-node2.ov.universe-data.ru,k8s-node1.ov.universe-data.ru"
   JAVA_OPTS: "-XX:UseAVX=0 -Djavax.net.debug=ssl"
   ##DATABASE##
@@ -17,8 +17,8 @@ data:
   NIFI_PROVENANCE_REPOSITORY_INDEXED_ATTRIBUTES: "'runId, batchId, sourceSystem'"
 
   #NIFI_CUSTOM_URL_UNIDATA:
-  # NIFI_CUSTOM_URL_MODELREGISTRY: "http://cluster-k8s.ov.universe-data.ru:${MODEL_REGISTRY_UI_PORT}"
-  NIFI_CUSTOM_URL_KIBANA: "https://cluster-k8s.ov.universe-data.ru/kibana"
+  # NIFI_CUSTOM_URL_MODELREGISTRY: "http://your_domain:${MODEL_REGISTRY_UI_PORT}"
+  NIFI_CUSTOM_URL_KIBANA: "https://your_domain/kibana"
   NIFI_CUSTOM_SMARTETL_VERSION: "${SMARTETL_VERSION}"
 
   # Security

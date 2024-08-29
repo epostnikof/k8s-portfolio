@@ -13,11 +13,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - cluster-k8s.ov.universe-data.ru
-      secretName: cluster-k8s-ov-universe-data-ru-tls
+        - your_domain
+      secretName: your_domain-tls
   ingressClassName: nginx
   rules:
-    - host: cluster-k8s.ov.universe-data.ru
+    - host: your_domain
       http:
         paths:
           - backend:
